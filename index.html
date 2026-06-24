@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Dashboard Real-Time</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            background-color: #eef2f5; 
+            padding: 20px; 
+            color: #333;
+        }
+        h2 { color: #2c3e50; }
+        .dashboard-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.05); 
+            width: 180px; 
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-5px); }
+        .value { 
+            font-size: 48px; 
+            font-weight: bold; 
+            color: #0057FF; 
+            margin: 15px 0; 
+            transition: opacity 0.3s ease;
+        }
+        .label { font-size: 16px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1px;}
+        #status-bar { 
+            padding: 10px 20px; 
+            border-radius: 20px; 
+            font-weight: 600; 
+            display: inline-block;
+            font-size: 14px;
+        }
+        .connected { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;}
+        .disconnected { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;}
+    </style>
+</head>
+<body>
+
+    <h2>Live Monitor ESP32</h2>
+    <div id="status-bar" class="disconnected">Mencari koneksi ke Broker...</div>
+
+    <div class="dashboard-container">
+        <div class="card">
+            <div class="label">Suhu</div>
+            <div class="value" id="suhu">-- &deg;C</div>
+        </div>
+        <div class="card">
+            <div class="label">Kelembapan</div>
+            <div class="value" id="kelembapan">-- %</div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. KONFIGURASI HIVEMQ CLOUD (WEBSOCKETS)
+        // ==========================================
+        // Masukkan Cluster URL Anda (Hanya domainnya saja, tanpa wss://)
+        const brokerUrl = "4f113aa3117e44698b320c66714caec7.s1.eu.hivemq.cloud"; 
+        
+        // Port wajib untuk WebSocket Secure di HiveMQ Cloud adalah 8884
+        const port = 8884; 
+        
+        const options = {
+            username: "admin",
+            password: "Admin123",
+            // Memberikan ID acak agar web tidak bentrok jika dibuka di banyak HP/Browser
+            clientId: "Web-Viewer-" + Math.random().toString(16).substring(2, 10)
+        };
+
+        const topic = "esp32/sensor";
+
+        // URL lengkap (Path /mqtt wajib ada untuk protokol WebSocket)
+        const connectUrl = `wss://${brokerUrl}:${port}/mqtt`;
+
+        // Mengambil elemen HTML untuk dimanipulasi
+        const statusBar = document.getElementById("status-bar");
+        const suhuText = document.getElementById("suhu");
+        const kelembapanText = document.getElementById("kelembapan");
+
+        // ==========================================
+        // 2. LOGIKA KONEKSI & PENERIMAAN DATA
+        // ==========================================
+        console.log("Menghubungkan ke " + connectUrl);
+        const client = mqtt.connect(connectUrl, options);
+
+        client.on("connect", () => {
+            console.log("Berhasil Terhubung ke Broker!");
+            statusBar.innerHTML = "🔴 Live Data Connected";
+            statusBar.className = "connected";
+            
+            client.subscribe(topic, (err) => {
+                if (!err) {
+                    console.log("Mendengarkan topik: " + topic);
+                }
+            });
+        });
+
+        client.on("message", (topic, message) => {
+            console.log("Data baru masuk:", message.toString());
+            try {
+                // Memecah format JSON dari ESP32
+                const data = JSON.parse(message.toString());
+                
+                // Memperbarui angka di layar
+                if(data.suhu !== undefined) suhuText.innerHTML = data.suhu + " &deg;C";
+                if(data.kelembapan !== undefined) kelembapanText.innerHTML = data.kelembapan + " %";
+                
+                // Efek kedip animasi lembut untuk menandakan pembaruan data
+                suhuText.style.opacity = 0.3;
+                kelembapanText.style.opacity = 0.3;
+                setTimeout(() => {
+                    suhuText.style.opacity = 1;
+                    kelembapanText.style.opacity = 1;
+                }, 150);
+
+            } catch (e) {
+                console.error("Format data bukan JSON yang valid", e);
+            }
+        });
+
+        client.on("offline", () => {
+            statusBar.innerHTML = "Koneksi Terputus / Menghubungkan ulang...";
+            statusBar.className = "disconnected";
+        });
+    </script>
+
+</body>
+</html>
