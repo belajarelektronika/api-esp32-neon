@@ -18,20 +18,21 @@
                 <span class="text-lg font-bold text-white tracking-tight">IoT Enterprise</span>
             </div>
             <nav class="p-4 space-y-1.5">
-                <button onclick="switchView('dashboard')" id="btn-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-150 bg-blue-600 text-white shadow-sm">
+                <button onclick="switchView('dashboard')" id="btn-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold bg-blue-600 text-white shadow-sm transition-all duration-150">
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Realtime Monitor
                 </button>
-                <button onclick="switchView('device')" id="btn-device" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                <button onclick="switchView('device')" id="btn-device" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-all duration-150">
                     <i data-lucide="tablet-node" class="w-5 h-5"></i> Pengelolaan Device
                 </button>
-                <button onclick="switchView('history')" id="btn-history" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                <button onclick="switchView('history')" id="btn-history" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-all duration-150">
                     <i data-lucide="history" class="w-5 h-5"></i> Histori Data
                 </button>
-                <button onclick="switchView('settings')" id="btn-settings" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                <button onclick="switchView('settings')" id="btn-settings" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-all duration-150">
                     <i data-lucide="settings-2" class="w-5 h-5"></i> Pengaturan Umum
                 </button>
             </nav>
         </div>
+        <div class="p-4 border-t border-slate-800 bg-slate-950/40 text-xs text-slate-500 text-center font-mono">v2.0.0-MultiNode</div>
     </aside>
 
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -44,7 +45,6 @@
                     <select id="device-selector" onchange="changeDeviceContext(this.value)" class="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer">
                         </select>
                 </div>
-                
                 <span id="status-badge" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                     <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Connecting...
                 </span>
@@ -64,13 +64,8 @@
                         <div class="p-4 bg-blue-50 text-blue-500 rounded-xl"><i data-lucide="droplets" class="w-7 h-7"></i></div>
                     </div>
                     <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex items-center justify-between">
-                        <div><p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Remote Power</p>
-                            <label class="relative inline-flex items-center cursor-pointer mt-2">
-                                <input type="checkbox" id="main-power-toggle" class="sr-only peer" onchange="togglePower(this.checked)">
-                                <div class="w-14 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
-                        </div>
-                        <div class="p-4 bg-slate-50 text-slate-500 rounded-xl"><i data-lucide="power" class="w-7 h-7"></i></div>
+                        <div><p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Status Node</p><h3 class="text-xl font-bold text-slate-900 mt-1">Terkoneksi</h3><p class="text-xs text-emerald-600 mt-1 flex items-center gap-1"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Stream Sinkron</p></div>
+                        <div class="p-4 bg-slate-50 text-slate-500 rounded-xl"><i data-lucide="activity" class="w-7 h-7"></i></div>
                     </div>
                 </div>
 
@@ -89,22 +84,29 @@
             </section>
 
             <section id="view-device" class="view-content space-y-6 hidden">
-                <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm max-w-4xl">
+                <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm max-w-5xl">
                     <h3 class="text-base font-bold text-slate-900 mb-1">Registrasi Mesin Baru</h3>
                     <div class="flex gap-3 items-end bg-slate-50 p-4 rounded-lg border border-slate-100 mt-4">
                         <div class="flex-1"><label class="block text-xs font-semibold text-slate-500 mb-1">Nama Tampilan (Bebas)</label><input type="text" id="dev-name" placeholder="Mesin Tas 2" class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm focus:outline-none"></div>
                         <div class="flex-1"><label class="block text-xs font-semibold text-slate-500 mb-1">ID Perangkat (Sesuai Kode ESP32)</label><input type="text" id="dev-id" placeholder="mesin-2" class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm focus:outline-none font-mono"></div>
-                        <button onclick="registerDevice()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-md h-[38px]">Daftarkan</button>
+                        <button onclick="registerDevice()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-md h-[38px] transition-all">Daftarkan Mesin</button>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm max-w-4xl">
-                    <h3 class="text-base font-bold text-slate-900 mb-4">Daftar Inventaris Mesin</h3>
+                <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm max-w-5xl">
+                    <h3 class="text-base font-bold text-slate-900 mb-4">Daftar Inventaris Mesin & Pusat Kendali</h3>
                     <table class="w-full text-left text-sm border border-slate-100 rounded-lg overflow-hidden">
                         <thead class="bg-slate-50 text-xs font-semibold text-slate-500 border-b border-slate-200">
-                            <tr><th class="px-6 py-3">Nama Mesin</th><th class="px-6 py-3">Device ID</th><th class="px-6 py-3 text-center">Topik MQTT</th><th class="px-6 py-3 text-center">Aksi</th></tr>
+                            <tr>
+                                <th class="px-6 py-3">Nama Mesin</th>
+                                <th class="px-6 py-3">Device ID</th>
+                                <th class="px-6 py-3 text-center">Topik MQTT</th>
+                                <th class="px-6 py-3 text-center">Power Kontrol</th>
+                                <th class="px-6 py-3 text-center">Aksi</th>
+                            </tr>
                         </thead>
-                        <tbody id="device-table-body" class="divide-y divide-slate-100 text-slate-600"></tbody>
+                        <tbody id="device-table-body" class="divide-y divide-slate-100 text-slate-600">
+                            </tbody>
                     </table>
                 </div>
             </section>
@@ -117,7 +119,7 @@
                         <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Dari Waktu</label><input type="datetime-local" id="filter-start" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm"></div>
                         <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Sampai Waktu</label><input type="datetime-local" id="filter-end" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm"></div>
                         <button onclick="fetchHistory()" id="btn-filter" class="bg-blue-600 text-white text-sm font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-1.5 h-[38px]">
-                            <i data-lucide="search" class="w-4 h-4"></i> <span id="btn-filter-text">Cari Data</span>
+                            <i data-lucide="search" class="w-4 h-4"></i> Cari Data
                         </button>
                     </div>
                     <div class="overflow-x-auto rounded-lg border border-slate-100">
@@ -126,7 +128,48 @@
                 </div>
             </section>
             
-            <section id="view-settings" class="view-content hidden"> </section>
+            <section id="view-settings" class="view-content space-y-6 hidden">
+                <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm max-w-3xl space-y-6">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Modular Cloud Settings</h3>
+                        <p class="text-xs text-slate-400">Ganti server HiveMQ Anda di sini. Data akan tersimpan aman di memori browser (Local Storage).</p>
+                    </div>
+                    <hr class="border-slate-100">
+                    <div class="space-y-4">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="network" class="w-4 h-4"></i> Parameter HiveMQ Cloud</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="sm:col-span-2">
+                                <label class="block text-xs font-medium text-slate-500 mb-1.5">Cluster URL Broker (Tanpa wss://)</label>
+                                <input type="text" id="cfg-broker" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm font-mono focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1.5">MQTT Username</label>
+                                <input type="text" id="cfg-user" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm font-mono focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-500 mb-1.5">MQTT Password</label>
+                                <input type="password" id="cfg-pass" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm font-mono focus:outline-none focus:border-blue-500">
+                            </div>
+                            <div class="sm:col-span-2 pt-2 flex items-center gap-4">
+                                <button onclick="saveMqttSettings()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 px-5 rounded-lg flex items-center gap-2 shadow-sm transition-all duration-200">
+                                    <i data-lucide="save" class="w-4 h-4"></i> Simpan & Hubungkan Ulang
+                                </button>
+                                <span id="save-notif" class="text-xs text-emerald-600 font-semibold hidden flex items-center gap-1">
+                                    <i data-lucide="check-circle" class="w-4 h-4"></i> Tersimpan!
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="border-slate-100">
+                    <div class="space-y-4 opacity-70">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="database" class="w-4 h-4"></i> Neon Database (Terkunci)</h4>
+                        <div>
+                            <input type="password" class="w-full bg-slate-100 border border-slate-200 rounded-lg px-4 py-2 text-sm font-mono text-slate-400 cursor-not-allowed" value="postgresql://neondb_owner:*************" disabled>
+                            <p class="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3 text-emerald-500"></i> Diamankan secara internal oleh Vercel Environment Variables.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 
@@ -134,28 +177,69 @@
         lucide.createIcons();
 
         // 1. DATA KREDENSIAL MQTT
-        const brokerUrl = localStorage.getItem('mqtt_broker') || "4f113aa3117e44698b320c66714caec7.s1.eu.hivemq.cloud";
+        const DEFAULT_BROKER = "4f113aa3117e44698b320c66714caec7.s1.eu.hivemq.cloud"; 
+        const DEFAULT_USER = "admin";
+        const DEFAULT_PASS = "Admin123";
+
+        const brokerUrl = localStorage.getItem('mqtt_broker') || DEFAULT_BROKER;
         const port = 8884;
         const mqttOptions = {
-            username: localStorage.getItem('mqtt_user') || "admin",
-            password: localStorage.getItem('mqtt_pass') || "Admin123",
+            username: localStorage.getItem('mqtt_user') || DEFAULT_USER,
+            password: localStorage.getItem('mqtt_pass') || DEFAULT_PASS,
             clientId: "Web-" + Math.random().toString(16).substring(2, 10),
             protocolVersion: 4, clean: true
         };
 
-        // 2. LOGIKA MULTI-DEVICE (DATABASE MESIN)
+        // Isi form pengaturan
+        if(document.getElementById("cfg-broker")) {
+            document.getElementById("cfg-broker").value = brokerUrl;
+            document.getElementById("cfg-user").value = mqttOptions.username;
+            document.getElementById("cfg-pass").value = mqttOptions.password;
+        }
+
+        function saveMqttSettings() {
+            localStorage.setItem('mqtt_broker', document.getElementById("cfg-broker").value.trim());
+            localStorage.setItem('mqtt_user', document.getElementById("cfg-user").value.trim());
+            localStorage.setItem('mqtt_pass', document.getElementById("cfg-pass").value.trim());
+            document.getElementById("save-notif").classList.remove("hidden");
+            setTimeout(() => { window.location.reload(); }, 1500);
+        }
+
+        // 2. FUNGSI NAVIGASI (Perbaikan Tombol Berubah Warna)
+        function switchView(viewId) {
+            // Sembunyikan semua section
+            document.querySelectorAll(".view-content").forEach(el => el.classList.add("hidden"));
+            // Tampilkan section yang dituju
+            document.getElementById("view-" + viewId).classList.remove("hidden");
+            
+            // Ubah gaya warna pada tombol sidebar
+            document.querySelectorAll(".nav-item").forEach(el => {
+                el.classList.remove("bg-blue-600", "text-white", "shadow-sm");
+                el.classList.add("text-slate-400", "hover:bg-slate-800", "hover:text-slate-200");
+            });
+            const activeBtn = document.getElementById("btn-" + viewId);
+            if(activeBtn) {
+                activeBtn.classList.remove("text-slate-400", "hover:bg-slate-800", "hover:text-slate-200");
+                activeBtn.classList.add("bg-blue-600", "text-white", "shadow-sm");
+            }
+
+            // Ubah judul Header
+            const titles = { dashboard: "Realtime Monitoring Dashboard", device: "Pengelolaan & Registrasi Perangkat", history: "Penyaringan Data Riwayat", settings: "Pengaturan Parameter Cloud" };
+            document.getElementById("page-title").innerText = titles[viewId] || "IoT Enterprise";
+        }
+
+        // 3. LOGIKA MULTI-DEVICE & KONTROL
         let registeredDevices = JSON.parse(localStorage.getItem('iot_devices')) || [
             { id: "mesin-1", name: "Mesin Tas Utama", isActive: true }
         ];
         
-        let currentDeviceId = registeredDevices[0].id; // Mesin default yang ditampilkan
+        let currentDeviceId = registeredDevices[0].id;
 
         const deviceDropdown = document.getElementById("device-selector");
         const deviceTableBody = document.getElementById("device-table-body");
-        const mainPowerToggle = document.getElementById("main-power-toggle");
 
         function renderDeviceManagers() {
-            // Update Dropdown di Header
+            // Dropdown Atas
             deviceDropdown.innerHTML = '';
             registeredDevices.forEach(dev => {
                 const option = document.createElement("option");
@@ -164,12 +248,27 @@
                 deviceDropdown.appendChild(option);
             });
 
-            // Update Tabel di Menu Device
+            // Tabel Device (Ditambah Sakelar Kontrol)
             if(!deviceTableBody) return;
             deviceTableBody.innerHTML = '';
             registeredDevices.forEach(dev => {
+                const isChecked = dev.isActive ? 'checked' : '';
                 const tr = document.createElement('tr');
-                tr.innerHTML = `<td class="px-6 py-3.5 font-bold">${dev.name}</td><td class="px-6 py-3.5 font-mono text-xs">${dev.id}</td><td class="px-6 py-3.5 text-center text-xs text-blue-600">sensor/${dev.id}</td><td class="px-6 py-3.5 text-center"><button onclick="deleteDevice('${dev.id}')" class="text-red-500 text-xs font-semibold flex items-center gap-1 mx-auto"><i data-lucide="trash-2" class="w-4 h-4"></i> Hapus</button></td>`;
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-3.5 font-bold">${dev.name}</td>
+                    <td class="px-6 py-3.5 font-mono text-xs">${dev.id}</td>
+                    <td class="px-6 py-3.5 text-center text-xs text-blue-600">kontrol/${dev.id}</td>
+                    <td class="px-6 py-3.5 text-center">
+                        <label class="relative inline-flex items-center cursor-pointer mx-auto mt-1">
+                            <input type="checkbox" class="sr-only peer" ${isChecked} onchange="togglePower('${dev.id}', this.checked)">
+                            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </td>
+                    <td class="px-6 py-3.5 text-center">
+                        <button onclick="deleteDevice('${dev.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1 mx-auto transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i> Hapus</button>
+                    </td>
+                `;
                 deviceTableBody.appendChild(tr);
             });
             lucide.createIcons();
@@ -195,38 +294,33 @@
             else renderDeviceManagers();
         }
 
-        // 3. FUNGSI INTI: PERPINDAHAN KONTEKS MESIN
+        // Mengirim perintah ke spesifik Device
+        function togglePower(deviceId, isChecked) {
+            const payload = isChecked ? "ON" : "OFF";
+            const topicTarget = `kontrol/${deviceId}`;
+            client.publish(topicTarget, payload, {qos: 1});
+            
+            const devIndex = registeredDevices.findIndex(d => d.id === deviceId);
+            if(devIndex !== -1) {
+                registeredDevices[devIndex].isActive = isChecked;
+                localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
+            }
+            console.log(`Perintah [${payload}] dikirim ke: ${topicTarget}`);
+        }
+
         function changeDeviceContext(newDeviceId) {
-            // Unsubscribe dari mesin lama
             client.unsubscribe(`sensor/${currentDeviceId}`);
-            
             currentDeviceId = newDeviceId;
-            const currentDevInfo = registeredDevices.find(d => d.id === currentDeviceId);
-            mainPowerToggle.checked = currentDevInfo.isActive; // Sesuaikan posisi sakelar
             
-            // Bersihkan data lama di layar
             analyticsChart.data.labels = []; analyticsChart.data.datasets[0].data = []; analyticsChart.data.datasets[1].data = []; analyticsChart.update();
             document.getElementById("live-table-body").innerHTML = '';
             document.getElementById("current-suhu").innerText = "-- °C"; document.getElementById("current-kelembapan").innerText = "-- %";
 
-            // Langganan (Subscribe) ke mesin baru dan tarik histori barunya
             client.subscribe(`sensor/${currentDeviceId}`);
             fetchHistory(); 
-            console.log(`Beralih fokus ke: ${currentDevInfo.name}`);
         }
 
-        // FUNGSI INTI: PENGENDALIAN MESIN (ON/OFF)
-        function togglePower(isChecked) {
-            const payload = isChecked ? "ON" : "OFF";
-            const topicTarget = `kontrol/${currentDeviceId}`;
-            client.publish(topicTarget, payload, {qos: 1});
-            
-            const devIndex = registeredDevices.findIndex(d => d.id === currentDeviceId);
-            registeredDevices[devIndex].isActive = isChecked;
-            localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
-        }
-
-        // 4. LOGIKA GRAFIK & API (HISTORY)
+        // 4. LOGIKA GRAFIK & API
         const ctx = document.getElementById('analyticsChart').getContext('2d');
         const analyticsChart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ label: 'Suhu (°C)', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.05)', fill: true, yAxisID: 'y' }, { label: 'Kelembapan (%)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.05)', fill: true, yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left', suggestedMin: 15, suggestedMax: 45 }, y1: { position: 'right', suggestedMin: 30, suggestedMax: 100, grid: { drawOnChartArea: false } } } }});
 
@@ -240,7 +334,6 @@
                 const response = await fetch(url);
                 const logs = await response.json();
                 
-                // Isi tabel history
                 const hBody = document.getElementById("historical-filter-body");
                 if(hBody) {
                     hBody.innerHTML = '';
@@ -251,7 +344,6 @@
                     });
                 }
 
-                // Isi ulang grafik & live table jika load awal
                 if(!startVal) {
                     logs.forEach(item => {
                         const d = new Date(item.waktu); const w = d.toLocaleTimeString('id-ID');
@@ -271,17 +363,12 @@
             document.getElementById("status-badge").className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
             document.getElementById("status-badge").innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Terhubung`;
             
-            // Saat terkonek, langsung dengarkan sensor dari mesin yang sedang aktif di Dropdown
             client.subscribe(`sensor/${currentDeviceId}`);
             fetchHistory();
-            
-            const activeInfo = registeredDevices.find(d => d.id === currentDeviceId);
-            mainPowerToggle.checked = activeInfo.isActive;
         });
 
         client.on("message", (topic, message) => {
             try {
-                // Pastikan web hanya bereaksi jika topik data masuk cocok dengan mesin yang sedang dipilih!
                 if(topic !== `sensor/${currentDeviceId}`) return; 
 
                 const data = JSON.parse(message.toString());
@@ -301,11 +388,6 @@
                 if(tb.children.length > 25) tb.lastChild.remove();
             } catch (e) { console.error("Error Payload:", e); }
         });
-
-        function switchView(id) {
-            document.querySelectorAll(".view-content").forEach(el => el.classList.add("hidden"));
-            document.getElementById("view-" + id).classList.remove("hidden");
-        }
     </script>
 </body>
 </html>
