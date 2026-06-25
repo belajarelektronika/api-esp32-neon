@@ -219,7 +219,7 @@
         // =======================================================
         // LOGIKA TRACKER STATUS (HEARTBEAT)
         // =======================================================
-        let registeredDevices = JSON.parse(localStorage.getItem('iot_devices')) || [{ id: "mesin-1", name: "Mesin Tas Utama", isActive: true }];
+        let registeredDevices = JSON.parse(localStorage.getItem('iot_devices')) || [{ id: "mesin-1", name: "ESP32-01", isActive: true }];
         let currentDeviceId = registeredDevices[0].id;
         
         // Objek untuk melacak kapan terakhir kali alat mengirim data (Timestamp)
