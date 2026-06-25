@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     // ========================================================
     // SESUAIKAN NAMA TABEL & KOLOM INI DENGAN DATABASE ANDA!
     // ========================================================
-    const NAMA_TABEL = 'sensor_data'; 
+    const NAMA_TABEL = 'data_sensor'; 
     const KOLOM_ID = 'device_id';
     const KOLOM_WAKTU = 'waktu';
 
