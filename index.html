@@ -32,7 +32,7 @@
                 </button>
             </nav>
         </div>
-        <div class="p-4 border-t border-slate-800 bg-slate-950/40 text-xs text-slate-500 text-center font-mono">v2.1.0-Heartbeat</div>
+        <div class="p-4 border-t border-slate-800 bg-slate-950/40 text-xs text-slate-500 text-center font-mono">v2.2.0-Stable</div>
     </aside>
 
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -41,16 +41,13 @@
             <h1 id="page-title" class="text-lg font-bold text-slate-900 tracking-tight">Realtime Monitoring Dashboard</h1>
             
             <div id="header-controls" class="flex items-center gap-4">
-                
                 <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
                     <i data-lucide="server" class="w-4 h-4 text-blue-600"></i>
                     <select id="device-selector" onchange="changeDeviceContext(this.value)" class="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer"></select>
                 </div>
-                
                 <span id="status-badge" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                     <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Connecting Broker...
                 </span>
-                
             </div>
         </header>
 
@@ -70,9 +67,7 @@
                         <div>
                             <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Status Node Terpilih</p>
                             <h3 id="dashboard-node-status" class="text-xl font-bold text-slate-900 mt-1">Offline</h3>
-                            <p id="dashboard-node-text" class="text-xs text-red-500 mt-1 flex items-center gap-1">
-                                <span id="dashboard-node-icon"><i data-lucide="x-circle" class="w-3.5 h-3.5"></i></span> Menunggu Data Masuk...
-                            </p>
+                            <p id="dashboard-node-text" class="text-xs text-red-500 mt-1 flex items-center gap-1">Menunggu Data Masuk...</p>
                         </div>
                         <div class="p-4 bg-slate-50 text-slate-500 rounded-xl"><i data-lucide="activity" class="w-7 h-7"></i></div>
                     </div>
@@ -113,8 +108,7 @@
                                 <th class="px-6 py-3 text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="device-table-body" class="divide-y divide-slate-100 text-slate-600">
-                            </tbody>
+                        <tbody id="device-table-body" class="divide-y divide-slate-100 text-slate-600"></tbody>
                     </table>
                 </div>
             </section>
@@ -215,12 +209,9 @@
         }
 
         // ==========================================
-        // 3. LOGIKA MULTI-DEVICE & KERTAS KOSONG
+        // 3. LOGIKA MULTI-DEVICE
         // ==========================================
-        // [PERBAIKAN] Data default diubah menjadi array kosong []
         let registeredDevices = JSON.parse(localStorage.getItem('iot_devices')) || [];
-        
-        // [PERBAIKAN] Jika kosong, currentDeviceId diset null
         let currentDeviceId = registeredDevices.length > 0 ? registeredDevices[0].id : null;
         
         const deviceLastSeen = {};
@@ -228,7 +219,6 @@
         const deviceTableBody = document.getElementById("device-table-body");
 
         function renderDeviceManagers() {
-            // Render Dropdown Atas
             deviceDropdown.innerHTML = '';
             if (registeredDevices.length === 0) {
                 const option = document.createElement("option");
@@ -243,7 +233,6 @@
                 });
             }
 
-            // Render Tabel Device dengan Tambahan Ikon (Lambang Device)
             if(!deviceTableBody) return;
             deviceTableBody.innerHTML = '';
             
@@ -255,12 +244,11 @@
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 border-b border-slate-50 transition-colors";
                     
-                    // Struktur HTML baris tabel yang baru (Ditambahkan Ikon CPU Berwarna Biru)
                     tr.innerHTML = `
                         <td class="px-6 py-3.5">
                             <div class="flex items-center gap-3">
                                 <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg shadow-sm border border-blue-100">
-                                    <i data-lucide="cpu" class="w-5 h-5"></i>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="16" rx="2" ry="2" stroke-width="2"></rect><rect x="9" y="9" width="6" height="6" stroke-width="2"></rect><line x1="9" y1="1" x2="9" y2="4" stroke-width="2"></line><line x1="15" y1="1" x2="15" y2="4" stroke-width="2"></line><line x1="9" y1="20" x2="9" y2="23" stroke-width="2"></line><line x1="15" y1="20" x2="15" y2="23" stroke-width="2"></line><line x1="20" y1="9" x2="23" y2="9" stroke-width="2"></line><line x1="20" y1="14" x2="23" y2="14" stroke-width="2"></line><line x1="1" y1="9" x2="4" y2="9" stroke-width="2"></line><line x1="1" y1="14" x2="4" y2="14" stroke-width="2"></line></svg>
                                 </div>
                                 <div>
                                     <div class="font-bold text-slate-900">${dev.name}</div>
@@ -279,39 +267,13 @@
                         </td>
                         <td class="px-6 py-3.5 text-center">
                             <button onclick="deleteDevice('${dev.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1 mx-auto transition-colors">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus
                             </button>
                         </td>
                     `;
                     deviceTableBody.appendChild(tr);
                 });
             }
-            
-            // Wajib memanggil fungsi ini agar lambang/ikon yang baru dirender bisa muncul
-            lucide.createIcons();
-            checkDeviceStatuses();
-        }
-
-            // Render Tabel Device
-            if(!deviceTableBody) return;
-            deviceTableBody.innerHTML = '';
-            if (registeredDevices.length === 0) {
-                deviceTableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500 font-medium">Belum ada perangkat terdaftar. Silakan daftarkan di form atas.</td></tr>';
-            } else {
-                registeredDevices.forEach(dev => {
-                    const isChecked = dev.isActive ? 'checked' : '';
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 border-b border-slate-50";
-                    tr.innerHTML = `
-                        <td class="px-6 py-3.5"><div class="font-bold text-slate-900">${dev.name}</div><div class="font-mono text-[10px] text-slate-400 mt-0.5">${dev.id}</div></td>
-                        <td class="px-6 py-3.5 text-center"><span id="badge-${dev.id}" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-500">OFFLINE</span></td>
-                        <td class="px-6 py-3.5 text-center"><label class="relative inline-flex items-center cursor-pointer mx-auto mt-1"><input type="checkbox" class="sr-only peer" ${isChecked} onchange="togglePower('${dev.id}', this.checked)"><div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div></label></td>
-                        <td class="px-6 py-3.5 text-center"><button onclick="deleteDevice('${dev.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1 mx-auto transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i> Hapus</button></td>
-                    `;
-                    deviceTableBody.appendChild(tr);
-                });
-            }
-            lucide.createIcons();
             checkDeviceStatuses();
         }
 
@@ -325,7 +287,6 @@
             localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
             document.getElementById("dev-name").value = ''; document.getElementById("dev-id").value = '';
             
-            // Jika ini mesin pertama, otomatis jadikan fokus utama
             if (registeredDevices.length === 1) {
                 changeDeviceContext(idStr);
             } else {
@@ -338,7 +299,6 @@
             localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
             
             if (registeredDevices.length === 0) {
-                // Jika semua mesin dihapus, kembalikan ke kondisi kosong
                 currentDeviceId = null;
                 clearDashboard();
                 renderDeviceManagers();
@@ -383,8 +343,14 @@
         }
 
         // =======================================================
-        // 4. LOGIKA TRACKER STATUS (HEARTBEAT)
+        // 4. LOGIKA TRACKER STATUS (OPTIMASI ANTI MACET 100%)
         // =======================================================
+        
+        // Ikon SVG Murni (Sangat ringan, tidak bikin RAM meledak)
+        const iconSuccess = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+        const iconError = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+        const iconInfo = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+
         function checkDeviceStatuses() {
             const now = Date.now();
             const dashStatusEl = document.getElementById("dashboard-node-status");
@@ -393,15 +359,15 @@
             if (!currentDeviceId) {
                 dashStatusEl.innerText = "Kosong";
                 dashTextEl.className = "text-xs text-slate-400 mt-1 flex items-center gap-1";
-                dashTextEl.innerHTML = `<i data-lucide="info" class="w-3.5 h-3.5"></i> Belum ada mesin terdaftar`;
+                dashTextEl.innerHTML = `${iconInfo} Belum ada mesin terdaftar`;
             } else if (deviceLastSeen[currentDeviceId] && (now - deviceLastSeen[currentDeviceId] < 35000)) {
                 dashStatusEl.innerText = "Online";
                 dashTextEl.className = "text-xs text-emerald-600 mt-1 flex items-center gap-1";
-                dashTextEl.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Data Aktual Tersinkronisasi`;
+                dashTextEl.innerHTML = `${iconSuccess} Data Aktual Tersinkronisasi`;
             } else {
                 dashStatusEl.innerText = "Offline";
                 dashTextEl.className = "text-xs text-red-500 mt-1 flex items-center gap-1";
-                dashTextEl.innerHTML = `<i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Terputus / Menunggu Data`;
+                dashTextEl.innerHTML = `${iconError} Terputus / Menunggu Data`;
             }
 
             registeredDevices.forEach(dev => {
@@ -416,9 +382,9 @@
                     }
                 }
             });
-            lucide.createIcons();
         }
 
+        // Loop tracker berjalan dengan sangat enteng sekarang
         setInterval(checkDeviceStatuses, 5000);
 
         // =======================================================
@@ -465,7 +431,7 @@
         }
 
         renderDeviceManagers();
-        clearDashboard(); // Pastikan grafik bersih saat pertama buka jika kosong
+        clearDashboard(); 
         
         const client = mqtt.connect(`wss://${brokerUrl}:${port}/mqtt`, mqttOptions);
         client.on("connect", () => {
