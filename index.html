@@ -243,6 +243,55 @@
                 });
             }
 
+            // Render Tabel Device dengan Tambahan Ikon (Lambang Device)
+            if(!deviceTableBody) return;
+            deviceTableBody.innerHTML = '';
+            
+            if (registeredDevices.length === 0) {
+                deviceTableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500 font-medium">Belum ada perangkat terdaftar. Silakan daftarkan di form atas.</td></tr>';
+            } else {
+                registeredDevices.forEach(dev => {
+                    const isChecked = dev.isActive ? 'checked' : '';
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 border-b border-slate-50 transition-colors";
+                    
+                    // Struktur HTML baris tabel yang baru (Ditambahkan Ikon CPU Berwarna Biru)
+                    tr.innerHTML = `
+                        <td class="px-6 py-3.5">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg shadow-sm border border-blue-100">
+                                    <i data-lucide="cpu" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold text-slate-900">${dev.name}</div>
+                                    <div class="font-mono text-[10px] text-slate-400 mt-0.5">ID: ${dev.id}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-3.5 text-center">
+                            <span id="badge-${dev.id}" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-500">OFFLINE</span>
+                        </td>
+                        <td class="px-6 py-3.5 text-center">
+                            <label class="relative inline-flex items-center cursor-pointer mx-auto mt-1">
+                                <input type="checkbox" class="sr-only peer" ${isChecked} onchange="togglePower('${dev.id}', this.checked)">
+                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </td>
+                        <td class="px-6 py-3.5 text-center">
+                            <button onclick="deleteDevice('${dev.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1 mx-auto transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus
+                            </button>
+                        </td>
+                    `;
+                    deviceTableBody.appendChild(tr);
+                });
+            }
+            
+            // Wajib memanggil fungsi ini agar lambang/ikon yang baru dirender bisa muncul
+            lucide.createIcons();
+            checkDeviceStatuses();
+        }
+
             // Render Tabel Device
             if(!deviceTableBody) return;
             deviceTableBody.innerHTML = '';
