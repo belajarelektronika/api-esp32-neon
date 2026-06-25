@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enterprise IoT Suite</title>
+    <title>Enterprise Multi-Device IoT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -21,26 +21,32 @@
                 <button onclick="switchView('dashboard')" id="btn-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-150 bg-blue-600 text-white shadow-sm">
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Realtime Monitor
                 </button>
-                <button onclick="switchView('device')" id="btn-device" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-all duration-150">
+                <button onclick="switchView('device')" id="btn-device" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200">
                     <i data-lucide="tablet-node" class="w-5 h-5"></i> Pengelolaan Device
                 </button>
-                <button onclick="switchView('history')" id="btn-history" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-all duration-150">
+                <button onclick="switchView('history')" id="btn-history" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200">
                     <i data-lucide="history" class="w-5 h-5"></i> Histori Data
                 </button>
-                <button onclick="switchView('settings')" id="btn-settings" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-all duration-150">
+                <button onclick="switchView('settings')" id="btn-settings" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200">
                     <i data-lucide="settings-2" class="w-5 h-5"></i> Pengaturan Umum
                 </button>
             </nav>
         </div>
-        <div class="p-4 border-t border-slate-800 bg-slate-950/40 text-xs text-slate-500 text-center font-mono">v1.4.0-Filter</div>
     </aside>
 
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
         <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 flex-shrink-0">
             <h1 id="page-title" class="text-lg font-bold text-slate-900 tracking-tight">Realtime Monitoring Dashboard</h1>
-            <div>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+                    <i data-lucide="server" class="w-4 h-4 text-blue-600"></i>
+                    <select id="device-selector" onchange="changeDeviceContext(this.value)" class="bg-transparent text-sm font-bold text-slate-700 focus:outline-none cursor-pointer">
+                        </select>
+                </div>
+                
                 <span id="status-badge" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Connecting Broker...
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Connecting...
                 </span>
             </div>
         </header>
@@ -50,26 +56,31 @@
             <section id="view-dashboard" class="view-content space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex items-center justify-between">
-                        <div><p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Temperatur Aktual</p><h3 id="current-suhu" class="text-4xl font-bold text-slate-900 mt-1">-- &deg;C</h3></div>
+                        <div><p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Suhu Mesin</p><h3 id="current-suhu" class="text-4xl font-bold text-slate-900 mt-1">-- &deg;C</h3></div>
                         <div class="p-4 bg-red-50 text-red-500 rounded-xl"><i data-lucide="thermometer" class="w-7 h-7"></i></div>
                     </div>
                     <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex items-center justify-between">
-                        <div><p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Kelembapan Udara</p><h3 id="current-kelembapan" class="text-4xl font-bold text-slate-900 mt-1">-- %</h3></div>
+                        <div><p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Kelembapan Ruang</p><h3 id="current-kelembapan" class="text-4xl font-bold text-slate-900 mt-1">-- %</h3></div>
                         <div class="p-4 bg-blue-50 text-blue-500 rounded-xl"><i data-lucide="droplets" class="w-7 h-7"></i></div>
                     </div>
-                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex items-center justify-between md:col-span-2 lg:col-span-1">
-                        <div><p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Status Node</p><h3 class="text-xl font-bold text-slate-900 mt-1">Active Core</h3><p class="text-xs text-emerald-600 mt-1 flex items-center gap-1"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Stream Terverifikasi</p></div>
-                        <div class="p-4 bg-slate-50 text-slate-500 rounded-xl"><i data-lucide="activity" class="w-7 h-7"></i></div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex items-center justify-between">
+                        <div><p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Remote Power</p>
+                            <label class="relative inline-flex items-center cursor-pointer mt-2">
+                                <input type="checkbox" id="main-power-toggle" class="sr-only peer" onchange="togglePower(this.checked)">
+                                <div class="w-14 h-7 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                        <div class="p-4 bg-slate-50 text-slate-500 rounded-xl"><i data-lucide="power" class="w-7 h-7"></i></div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between">
-                        <h4 class="text-sm font-bold text-slate-900 mb-4">Grafik Aliran Metrik Seketika</h4>
+                        <h4 class="text-sm font-bold text-slate-900 mb-4">Grafik Analisis Mesin Terpilih</h4>
                         <div class="h-80"><canvas id="analyticsChart"></canvas></div>
                     </div>
                     <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
-                        <div class="p-5 border-b border-slate-200 bg-slate-50/50"><h4 class="text-sm font-bold text-slate-900">Aliran Live Log</h4></div>
+                        <div class="p-5 border-b border-slate-200 bg-slate-50/50"><h4 class="text-sm font-bold text-slate-900">Aliran Log Seketika</h4></div>
                         <div class="flex-1 overflow-y-auto max-h-[320px]">
                             <table class="w-full text-left text-xs"><thead class="bg-slate-100 text-slate-500 font-semibold sticky top-0 border-b border-slate-200"><tr><th class="px-4 py-2.5">Waktu</th><th class="px-4 py-2.5">Suhu</th><th class="px-4 py-2.5">Lembap</th></tr></thead><tbody id="live-table-body" class="divide-y divide-slate-100"></tbody></table>
                         </div>
@@ -79,38 +90,21 @@
 
             <section id="view-device" class="view-content space-y-6 hidden">
                 <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm max-w-4xl">
-                    <h3 class="text-base font-bold text-slate-900 mb-1">Registrasi Perangkat Baru</h3>
-                    <p class="text-xs text-slate-400 mb-4">Daftarkan ID dan Topik Kontrol alat untuk membuka akses kendali jarak jauh.</p>
-                    
-                    <div class="flex gap-3 items-end bg-slate-50 p-4 rounded-lg border border-slate-100">
-                        <div class="flex-1">
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Nama Perangkat</label>
-                            <input type="text" id="dev-name" placeholder="Contoh: Mesin Tas Line 1" class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
-                        </div>
-                        <div class="flex-1">
-                            <label class="block text-xs font-semibold text-slate-500 mb-1">Topik Kontrol MQTT</label>
-                            <input type="text" id="dev-topic" placeholder="Contoh: esp32/kontrol" class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
-                        </div>
-                        <button onclick="registerDevice()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-md h-[38px] transition-all">
-                            Daftarkan
-                        </button>
+                    <h3 class="text-base font-bold text-slate-900 mb-1">Registrasi Mesin Baru</h3>
+                    <div class="flex gap-3 items-end bg-slate-50 p-4 rounded-lg border border-slate-100 mt-4">
+                        <div class="flex-1"><label class="block text-xs font-semibold text-slate-500 mb-1">Nama Tampilan (Bebas)</label><input type="text" id="dev-name" placeholder="Mesin Tas 2" class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm focus:outline-none"></div>
+                        <div class="flex-1"><label class="block text-xs font-semibold text-slate-500 mb-1">ID Perangkat (Sesuai Kode ESP32)</label><input type="text" id="dev-id" placeholder="mesin-2" class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm focus:outline-none font-mono"></div>
+                        <button onclick="registerDevice()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-md h-[38px]">Daftarkan</button>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm max-w-4xl">
-                    <h3 class="text-base font-bold text-slate-900 mb-4">Pusat Kendali Perangkat Terdaftar</h3>
+                    <h3 class="text-base font-bold text-slate-900 mb-4">Daftar Inventaris Mesin</h3>
                     <table class="w-full text-left text-sm border border-slate-100 rounded-lg overflow-hidden">
                         <thead class="bg-slate-50 text-xs font-semibold text-slate-500 border-b border-slate-200">
-                            <tr>
-                                <th class="px-6 py-3">Nama Perangkat</th>
-                                <th class="px-6 py-3">Topik Perintah</th>
-                                <th class="px-6 py-3 text-center">Status Jaringan</th>
-                                <th class="px-6 py-3 text-center">Power Kontrol</th>
-                                <th class="px-6 py-3 text-center">Aksi</th>
-                            </tr>
+                            <tr><th class="px-6 py-3">Nama Mesin</th><th class="px-6 py-3">Device ID</th><th class="px-6 py-3 text-center">Topik MQTT</th><th class="px-6 py-3 text-center">Aksi</th></tr>
                         </thead>
-                        <tbody id="device-table-body" class="divide-y divide-slate-100 text-slate-600">
-                            </tbody>
+                        <tbody id="device-table-body" class="divide-y divide-slate-100 text-slate-600"></tbody>
                     </table>
                 </div>
             </section>
@@ -118,57 +112,21 @@
             <section id="view-history" class="view-content space-y-6 hidden">
                 <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm max-w-5xl">
                     <h3 class="text-base font-bold text-slate-900 mb-1">Penyaringan Data Riwayat</h3>
-                    <p class="text-xs text-slate-400 mb-6">Pilih rentang waktu untuk mengunduh spesifik arsip dari Neon database (Maks 1000 data)</p>
-                    
+                    <p class="text-xs text-slate-400 mb-6">Sistem otomatis menyaring data berdasarkan mesin yang Anda pilih di Header atas.</p>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Dari Waktu & Tanggal</label>
-                            <input type="datetime-local" id="filter-start" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Sampai Waktu & Tanggal</label>
-                            <input type="datetime-local" id="filter-end" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
-                        </div>
-                        <button onclick="filterHistory()" id="btn-filter" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-1.5 shadow-sm h-[38px] transition-all">
+                        <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Dari Waktu</label><input type="datetime-local" id="filter-start" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm"></div>
+                        <div><label class="block text-xs font-semibold text-slate-500 uppercase mb-2">Sampai Waktu</label><input type="datetime-local" id="filter-end" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm"></div>
+                        <button onclick="fetchHistory()" id="btn-filter" class="bg-blue-600 text-white text-sm font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-1.5 h-[38px]">
                             <i data-lucide="search" class="w-4 h-4"></i> <span id="btn-filter-text">Cari Data</span>
                         </button>
                     </div>
-
                     <div class="overflow-x-auto rounded-lg border border-slate-100">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-xs font-semibold text-slate-500 border-b border-slate-200">
-                                <tr><th class="px-6 py-3">Waktu Terekam</th><th class="px-6 py-3">Suhu</th><th class="px-6 py-3">Kelembapan</th></tr>
-                            </thead>
-                            <tbody id="historical-filter-body" class="divide-y divide-slate-100 text-slate-600">
-                                </tbody>
-                        </table>
+                        <table class="w-full text-left text-sm"><thead class="bg-slate-50 text-xs font-semibold text-slate-500 border-b border-slate-200"><tr><th class="px-6 py-3">Waktu Terekam</th><th class="px-6 py-3">Suhu</th><th class="px-6 py-3">Kelembapan</th></tr></thead><tbody id="historical-filter-body" class="divide-y divide-slate-100 text-slate-600"></tbody></table>
                     </div>
                 </div>
             </section>
-
-            <section id="view-settings" class="view-content space-y-6 hidden">
-                <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm max-w-3xl space-y-6">
-                    <div><h3 class="text-base font-bold text-slate-900">Modular Cloud Settings</h3><p class="text-xs text-slate-400">Ganti server HiveMQ Anda di sini. Disimpan aman di Local Storage.</p></div>
-                    <hr class="border-slate-100">
-                    <div class="space-y-4">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="network" class="w-4 h-4"></i> Parameter HiveMQ Cloud</h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="sm:col-span-2"><label class="block text-xs font-medium text-slate-500 mb-1.5">Cluster URL Broker</label><input type="text" id="cfg-broker" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm font-mono focus:outline-none focus:border-blue-500"></div>
-                            <div><label class="block text-xs font-medium text-slate-500 mb-1.5">MQTT Username</label><input type="text" id="cfg-user" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm font-mono focus:outline-none focus:border-blue-500"></div>
-                            <div><label class="block text-xs font-medium text-slate-500 mb-1.5">MQTT Password</label><input type="password" id="cfg-pass" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm font-mono focus:outline-none focus:border-blue-500"></div>
-                            <div class="sm:col-span-2 pt-2 flex items-center gap-4">
-                                <button onclick="saveMqttSettings()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 px-5 rounded-lg flex items-center gap-2 shadow-sm"><i data-lucide="save" class="w-4 h-4"></i> Simpan & Hubungkan Ulang</button>
-                                <span id="save-notif" class="text-xs text-emerald-600 font-semibold hidden flex items-center gap-1"><i data-lucide="check-circle" class="w-4 h-4"></i> Tersimpan!</span>
-                            </div>
-                        </div>
-                    </div>
-                    <hr class="border-slate-100">
-                    <div class="space-y-4 opacity-70">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2"><i data-lucide="database" class="w-4 h-4"></i> Neon Database (Terkunci)</h4>
-                        <div><input type="password" class="w-full bg-slate-100 border border-slate-200 rounded-lg px-4 py-2 text-sm font-mono text-slate-400 cursor-not-allowed" value="postgresql://neondb_owner:*************" disabled><p class="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3 text-emerald-500"></i> Diamankan di Vercel.</p></div>
-                    </div>
-                </div>
-            </section>
+            
+            <section id="view-settings" class="view-content hidden"> </section>
         </div>
     </div>
 
@@ -176,255 +134,178 @@
         lucide.createIcons();
 
         // 1. DATA KREDENSIAL MQTT
-        const DEFAULT_BROKER = "4f113aa3117e44698b320c66714caec7.s1.eu.hivemq.cloud"; 
-        const DEFAULT_USER = "admin";
-        const DEFAULT_PASS = "Admin123";
-
-        const brokerUrl = localStorage.getItem('mqtt_broker') || DEFAULT_BROKER;
+        const brokerUrl = localStorage.getItem('mqtt_broker') || "4f113aa3117e44698b320c66714caec7.s1.eu.hivemq.cloud";
         const port = 8884;
         const mqttOptions = {
-            username: localStorage.getItem('mqtt_user') || DEFAULT_USER,
-            password: localStorage.getItem('mqtt_pass') || DEFAULT_PASS,
+            username: localStorage.getItem('mqtt_user') || "admin",
+            password: localStorage.getItem('mqtt_pass') || "Admin123",
             clientId: "Web-" + Math.random().toString(16).substring(2, 10),
             protocolVersion: 4, clean: true
         };
-        const topic = "esp32/sensor";
 
-        document.getElementById("cfg-broker").value = brokerUrl;
-        document.getElementById("cfg-user").value = mqttOptions.username;
-        document.getElementById("cfg-pass").value = mqttOptions.password;
+        // 2. LOGIKA MULTI-DEVICE (DATABASE MESIN)
+        let registeredDevices = JSON.parse(localStorage.getItem('iot_devices')) || [
+            { id: "mesin-1", name: "Mesin Tas Utama", isActive: true }
+        ];
+        
+        let currentDeviceId = registeredDevices[0].id; // Mesin default yang ditampilkan
 
-        function saveMqttSettings() {
-            localStorage.setItem('mqtt_broker', document.getElementById("cfg-broker").value.trim());
-            localStorage.setItem('mqtt_user', document.getElementById("cfg-user").value.trim());
-            localStorage.setItem('mqtt_pass', document.getElementById("cfg-pass").value.trim());
-            document.getElementById("save-notif").classList.remove("hidden");
-            setTimeout(() => { window.location.reload(); }, 1500);
-        }
+        const deviceDropdown = document.getElementById("device-selector");
+        const deviceTableBody = document.getElementById("device-table-body");
+        const mainPowerToggle = document.getElementById("main-power-toggle");
 
-        // 2. LOGIKA PINDAH MENU
-        function switchView(viewId) {
-            document.querySelectorAll(".view-content").forEach(el => el.classList.add("hidden"));
-            document.getElementById("view-" + viewId).classList.remove("hidden");
-            document.querySelectorAll(".nav-item").forEach(el => { el.classList.remove("bg-blue-600", "text-white"); el.classList.add("text-slate-400", "hover:bg-slate-800"); });
-            document.getElementById("btn-" + viewId).classList.add("bg-blue-600", "text-white");
-            document.getElementById("btn-" + viewId).classList.remove("text-slate-400", "hover:bg-slate-800");
-            const titles = { dashboard: "Realtime Monitoring Dashboard", device: "Pengelolaan Device", history: "Penyaringan Data Riwayat", settings: "Pengaturan Parameter Cloud" };
-            document.getElementById("page-title").innerText = titles[viewId];
-        }
-
-        const currentSuhuText = document.getElementById("current-suhu");
-        const currentLembapText = document.getElementById("current-kelembapan");
-        const liveTableBody = document.getElementById("live-table-body");
-        const historyTableBody = document.getElementById("historical-filter-body");
-
-        // CHART SETUP
-        const ctx = document.getElementById('analyticsChart').getContext('2d');
-        const analyticsChart = new Chart(ctx, {
-            type: 'line',
-            data: { labels: [], datasets: [{ label: 'Suhu (°C)', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.05)', fill: true, yAxisID: 'y' }, { label: 'Kelembapan (%)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.05)', fill: true, yAxisID: 'y1' }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left', suggestedMin: 15, suggestedMax: 45 }, y1: { position: 'right', suggestedMin: 30, suggestedMax: 100, grid: { drawOnChartArea: false } } } }
-        });
-
-        function formatWaktu(waktuString) {
-            const d = new Date(waktuString);
-            return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }
-
-        // 3. AMBIL DATA HISTORI (Saat web dibuka)
-        async function loadHistoricalData() {
-            try {
-                const response = await fetch('/api/history');
-                const logs = await response.json();
-                if (Array.isArray(logs)) {
-                    logs.forEach(item => {
-                        const waktu = formatWaktu(item.waktu);
-                        analyticsChart.data.labels.push(waktu);
-                        analyticsChart.data.datasets[0].data.push(item.suhu);
-                        analyticsChart.data.datasets[1].data.push(item.kelembapan);
-                    });
-                    analyticsChart.update();
-
-                    if(logs.length > 0) {
-                        currentSuhuText.innerText = logs[logs.length - 1].suhu + " °C";
-                        currentLembapText.innerText = logs[logs.length - 1].kelembapan + " %";
-                    }
-
-                    renderHistoryTable(logs);
-                }
-            } catch (err) { console.error("Gagal memuat histori:", err); }
-        }
-
-        // 4. FUNGSI RENDER TABEL HISTORI
-        function renderHistoryTable(dataArray) {
-            historyTableBody.innerHTML = '';
-            if (dataArray.length === 0) {
-                historyTableBody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-red-500 font-medium">Tidak ada data ditemukan pada rentang waktu tersebut.</td></tr>`;
-                return;
-            }
-            [...dataArray].reverse().forEach(item => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 border-b border-slate-50/50 transition-colors";
-                tr.innerHTML = `<td class="px-6 py-3.5 font-medium text-slate-900">${new Date(item.waktu).toLocaleString('id-ID')}</td><td class="px-6 py-3.5 text-red-600 font-semibold">${item.suhu} &deg;C</td><td class="px-6 py-3.5 text-blue-600 font-semibold">${item.kelembapan} %</td>`;
-                historyTableBody.appendChild(tr);
+        function renderDeviceManagers() {
+            // Update Dropdown di Header
+            deviceDropdown.innerHTML = '';
+            registeredDevices.forEach(dev => {
+                const option = document.createElement("option");
+                option.value = dev.id; option.text = dev.name;
+                if(dev.id === currentDeviceId) option.selected = true;
+                deviceDropdown.appendChild(option);
             });
+
+            // Update Tabel di Menu Device
+            if(!deviceTableBody) return;
+            deviceTableBody.innerHTML = '';
+            registeredDevices.forEach(dev => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="px-6 py-3.5 font-bold">${dev.name}</td><td class="px-6 py-3.5 font-mono text-xs">${dev.id}</td><td class="px-6 py-3.5 text-center text-xs text-blue-600">sensor/${dev.id}</td><td class="px-6 py-3.5 text-center"><button onclick="deleteDevice('${dev.id}')" class="text-red-500 text-xs font-semibold flex items-center gap-1 mx-auto"><i data-lucide="trash-2" class="w-4 h-4"></i> Hapus</button></td>`;
+                deviceTableBody.appendChild(tr);
+            });
+            lucide.createIcons();
         }
 
-        // 5. FUNGSI FILTER HISTORI BERDASARKAN TANGGAL
-        async function filterHistory() {
-            const startVal = document.getElementById("filter-start").value;
-            const endVal = document.getElementById("filter-end").value;
-            const btnText = document.getElementById("btn-filter-text");
+        function registerDevice() {
+            const nameStr = document.getElementById("dev-name").value.trim();
+            const idStr = document.getElementById("dev-id").value.trim();
+            if(!nameStr || !idStr) return alert("Isi form dengan lengkap!");
+            if(registeredDevices.find(d => d.id === idStr)) return alert("ID Perangkat sudah digunakan!");
+            
+            registeredDevices.push({ id: idStr, name: nameStr, isActive: true });
+            localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
+            document.getElementById("dev-name").value = ''; document.getElementById("dev-id").value = '';
+            renderDeviceManagers();
+        }
 
-            if (!startVal || !endVal) {
-                alert("Mohon isi kotak rentang waktu 'Dari' dan 'Sampai'!");
-                return;
-            }
+        function deleteDevice(id) {
+            if(registeredDevices.length === 1) return alert("Tidak boleh menghapus semua mesin!");
+            registeredDevices = registeredDevices.filter(d => d.id !== id);
+            localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
+            if(currentDeviceId === id) changeDeviceContext(registeredDevices[0].id);
+            else renderDeviceManagers();
+        }
 
-            btnText.innerText = "Mencari...";
-            historyTableBody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-500 font-medium animate-pulse"><i data-lucide="loader" class="inline w-4 h-4 mr-2 animate-spin"></i> Sedang mengambil data ke server Neon...</td></tr>`;
-            lucide.createIcons();
+        // 3. FUNGSI INTI: PERPINDAHAN KONTEKS MESIN
+        function changeDeviceContext(newDeviceId) {
+            // Unsubscribe dari mesin lama
+            client.unsubscribe(`sensor/${currentDeviceId}`);
+            
+            currentDeviceId = newDeviceId;
+            const currentDevInfo = registeredDevices.find(d => d.id === currentDeviceId);
+            mainPowerToggle.checked = currentDevInfo.isActive; // Sesuaikan posisi sakelar
+            
+            // Bersihkan data lama di layar
+            analyticsChart.data.labels = []; analyticsChart.data.datasets[0].data = []; analyticsChart.data.datasets[1].data = []; analyticsChart.update();
+            document.getElementById("live-table-body").innerHTML = '';
+            document.getElementById("current-suhu").innerText = "-- °C"; document.getElementById("current-kelembapan").innerText = "-- %";
+
+            // Langganan (Subscribe) ke mesin baru dan tarik histori barunya
+            client.subscribe(`sensor/${currentDeviceId}`);
+            fetchHistory(); 
+            console.log(`Beralih fokus ke: ${currentDevInfo.name}`);
+        }
+
+        // FUNGSI INTI: PENGENDALIAN MESIN (ON/OFF)
+        function togglePower(isChecked) {
+            const payload = isChecked ? "ON" : "OFF";
+            const topicTarget = `kontrol/${currentDeviceId}`;
+            client.publish(topicTarget, payload, {qos: 1});
+            
+            const devIndex = registeredDevices.findIndex(d => d.id === currentDeviceId);
+            registeredDevices[devIndex].isActive = isChecked;
+            localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
+        }
+
+        // 4. LOGIKA GRAFIK & API (HISTORY)
+        const ctx = document.getElementById('analyticsChart').getContext('2d');
+        const analyticsChart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ label: 'Suhu (°C)', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.05)', fill: true, yAxisID: 'y' }, { label: 'Kelembapan (%)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.05)', fill: true, yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left', suggestedMin: 15, suggestedMax: 45 }, y1: { position: 'right', suggestedMin: 30, suggestedMax: 100, grid: { drawOnChartArea: false } } } }});
+
+        async function fetchHistory() {
+            const startVal = document.getElementById("filter-start")?.value || '';
+            const endVal = document.getElementById("filter-end")?.value || '';
+            let url = `/api/history?device_id=${currentDeviceId}`;
+            if(startVal && endVal) url += `&start=${encodeURIComponent(startVal)}&end=${encodeURIComponent(endVal)}`;
 
             try {
-                // Menembak Vercel API yang baru kita buat (mengirimkan start dan end)
-                const url = `/api/history?start=${encodeURIComponent(startVal)}&end=${encodeURIComponent(endVal)}`;
                 const response = await fetch(url);
                 const logs = await response.json();
-                renderHistoryTable(logs);
-            } catch (error) {
-                console.error("Gagal Filter:", error);
-                historyTableBody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-red-500">Koneksi API gagal.</td></tr>`;
-            } finally {
-                btnText.innerText = "Cari Data";
-            }
+                
+                // Isi tabel history
+                const hBody = document.getElementById("historical-filter-body");
+                if(hBody) {
+                    hBody.innerHTML = '';
+                    [...logs].reverse().forEach(item => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td class="px-6 py-3.5">${new Date(item.waktu).toLocaleString('id-ID')}</td><td class="px-6 py-3.5 text-red-600 font-semibold">${item.suhu} &deg;C</td><td class="px-6 py-3.5 text-blue-600 font-semibold">${item.kelembapan} %</td>`;
+                        hBody.appendChild(tr);
+                    });
+                }
+
+                // Isi ulang grafik & live table jika load awal
+                if(!startVal) {
+                    logs.forEach(item => {
+                        const d = new Date(item.waktu); const w = d.toLocaleTimeString('id-ID');
+                        analyticsChart.data.labels.push(w); analyticsChart.data.datasets[0].data.push(item.suhu); analyticsChart.data.datasets[1].data.push(item.kelembapan);
+                    });
+                    analyticsChart.update();
+                    if(logs.length > 0) { document.getElementById("current-suhu").innerText = logs[logs.length-1].suhu + " °C"; document.getElementById("current-kelembapan").innerText = logs[logs.length-1].kelembapan + " %"; }
+                }
+            } catch (error) { console.error("API Gagal:", error); }
         }
 
-        loadHistoricalData();
+        // 5. KONEKSI MQTT
+        renderDeviceManagers();
         
-        // 6. KONEKSI MQTT (LIVE STREAM)
         const client = mqtt.connect(`wss://${brokerUrl}:${port}/mqtt`, mqttOptions);
-        const statusBadge = document.getElementById("status-badge");
-
         client.on("connect", () => {
-            statusBadge.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
-            statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live Monitoring Active`;
-            client.subscribe(topic);
+            document.getElementById("status-badge").className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
+            document.getElementById("status-badge").innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Terhubung`;
+            
+            // Saat terkonek, langsung dengarkan sensor dari mesin yang sedang aktif di Dropdown
+            client.subscribe(`sensor/${currentDeviceId}`);
+            fetchHistory();
+            
+            const activeInfo = registeredDevices.find(d => d.id === currentDeviceId);
+            mainPowerToggle.checked = activeInfo.isActive;
         });
 
         client.on("message", (topic, message) => {
             try {
+                // Pastikan web hanya bereaksi jika topik data masuk cocok dengan mesin yang sedang dipilih!
+                if(topic !== `sensor/${currentDeviceId}`) return; 
+
                 const data = JSON.parse(message.toString());
-                const waktu = formatWaktu(new Date());
+                const w = new Date().toLocaleTimeString('id-ID');
 
-                currentSuhuText.innerText = data.suhu + " °C";
-                currentLembapText.innerText = data.kelembapan + " %";
+                document.getElementById("current-suhu").innerText = data.suhu + " °C";
+                document.getElementById("current-kelembapan").innerText = data.kelembapan + " %";
 
-                analyticsChart.data.labels.push(waktu);
-                analyticsChart.data.datasets[0].data.push(data.suhu);
-                analyticsChart.data.datasets[1].data.push(data.kelembapan);
-
-                if (analyticsChart.data.labels.length > 30) {
-                    analyticsChart.data.labels.shift();
-                    analyticsChart.data.datasets[0].data.shift();
-                    analyticsChart.data.datasets[1].data.shift();
-                }
+                analyticsChart.data.labels.push(w); analyticsChart.data.datasets[0].data.push(data.suhu); analyticsChart.data.datasets[1].data.push(data.kelembapan);
+                if (analyticsChart.data.labels.length > 30) { analyticsChart.data.labels.shift(); analyticsChart.data.datasets[0].data.shift(); analyticsChart.data.datasets[1].data.shift(); }
                 analyticsChart.update();
 
-                const newRow = document.createElement('tr');
-                newRow.innerHTML = `<td class="px-4 py-2 font-medium text-slate-900">${waktu}</td><td class="px-4 py-2 text-red-500 font-semibold">${data.suhu} &deg;C</td><td class="px-4 py-2 text-blue-500 font-semibold">${data.kelembapan} %</td>`;
-                liveTableBody.insertBefore(newRow, liveTableBody.firstChild);
-                if (liveTableBody.children.length > 25) liveTableBody.lastChild.remove();
-
-            } catch (e) { console.error("Format data rusak:", e); }
+                const tb = document.getElementById("live-table-body");
+                const nr = document.createElement('tr');
+                nr.innerHTML = `<td class="px-4 py-2">${w}</td><td class="px-4 py-2 text-red-500 font-semibold">${data.suhu} &deg;C</td><td class="px-4 py-2 text-blue-500 font-semibold">${data.kelembapan} %</td>`;
+                tb.insertBefore(nr, tb.firstChild);
+                if(tb.children.length > 25) tb.lastChild.remove();
+            } catch (e) { console.error("Error Payload:", e); }
         });
-        // ==========================================
-        // LOGIKA PENGELOLAAN & KONTROL DEVICE
-        // ==========================================
-        
-        // Membaca data perangkat dari Local Storage, jika kosong beri 1 default
-        let registeredDevices = JSON.parse(localStorage.getItem('iot_devices')) || [
-            { id: Date.now(), name: "ESP32 Utama", topic: "esp32/kontrol", isActive: true }
-        ];
 
-        const deviceTableBody = document.getElementById("device-table-body");
-
-        function renderDevices() {
-            deviceTableBody.innerHTML = '';
-            registeredDevices.forEach(dev => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition-colors";
-                tr.innerHTML = `
-                    <td class="px-6 py-3.5 font-bold text-slate-900">${dev.name}</td>
-                    <td class="px-6 py-3.5 font-mono text-xs text-blue-600">${dev.topic}</td>
-                    <td class="px-6 py-3.5 text-center">
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
-                            ONLINE
-                        </span>
-                    </td>
-                    <td class="px-6 py-3.5 text-center">
-                        <label class="relative inline-flex items-center cursor-pointer mx-auto">
-                            <input type="checkbox" class="sr-only peer" ${dev.isActive ? 'checked' : ''} onchange="toggleDeviceCommand('${dev.topic}', this.checked, ${dev.id})">
-                            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
-                    </td>
-                    <td class="px-6 py-3.5 text-center">
-                        <button onclick="deleteDevice(${dev.id})" class="text-red-500 hover:text-red-700 font-semibold text-xs flex items-center gap-1 mx-auto transition-colors">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus
-                        </button>
-                    </td>
-                `;
-                deviceTableBody.appendChild(tr);
-            });
-            lucide.createIcons(); // Segarkan icon
+        function switchView(id) {
+            document.querySelectorAll(".view-content").forEach(el => el.classList.add("hidden"));
+            document.getElementById("view-" + id).classList.remove("hidden");
         }
-
-        function registerDevice() {
-            const nameInput = document.getElementById("dev-name");
-            const topicInput = document.getElementById("dev-topic");
-
-            if (!nameInput.value || !topicInput.value) {
-                alert("Mohon isi Nama dan Topik perangkat!");
-                return;
-            }
-
-            // Tambahkan ke array dan simpan ke Local Storage
-            registeredDevices.push({
-                id: Date.now(),
-                name: nameInput.value,
-                topic: topicInput.value,
-                isActive: true
-            });
-
-            localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
-            nameInput.value = ''; topicInput.value = '';
-            renderDevices();
-        }
-
-        function deleteDevice(id) {
-            registeredDevices = registeredDevices.filter(dev => dev.id !== id);
-            localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
-            renderDevices();
-        }
-
-        // FUNGSI INTI: Mengirim Perintah ON/OFF lewat MQTT
-        function toggleDeviceCommand(topicTarget, isChecked, deviceId) {
-            const payload = isChecked ? "ON" : "OFF";
-            
-            // Mengirim data publikasi ke broker HiveMQ
-            client.publish(topicTarget, payload, { qos: 1 });
-            
-            // Update status state di memori agar posisi sakelar tersimpan
-            const devIndex = registeredDevices.findIndex(d => d.id === deviceId);
-            if(devIndex !== -1) {
-                registeredDevices[devIndex].isActive = isChecked;
-                localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
-            }
-
-            console.log(`Perintah [${payload}] telah dikirim ke topik: ${topicTarget}`);
-        }
-
-        // Panggil render saat halaman pertama kali dibuka
-        renderDevices();
     </script>
 </body>
 </html>
