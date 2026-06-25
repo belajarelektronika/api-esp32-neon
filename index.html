@@ -153,15 +153,21 @@
         </div>
     </div>
 
-    <script>
+   <script>
         lucide.createIcons();
 
-        // KREDENSIAL MQTT
-        const brokerUrl = localStorage.getItem('mqtt_broker') || "4f113aa3117e44698b320c66714caec7.s1.eu.hivemq.cloud";
+        // ==========================================
+        // 1. KREDENSIAL MQTT
+        // ==========================================
+        const DEFAULT_BROKER = "4f113aa3117e44698b320c66714caec7.s1.eu.hivemq.cloud"; 
+        const DEFAULT_USER = "admin";
+        const DEFAULT_PASS = "Admin123";
+
+        const brokerUrl = localStorage.getItem('mqtt_broker') || DEFAULT_BROKER;
         const port = 8884;
         const mqttOptions = {
-            username: localStorage.getItem('mqtt_user') || "admin",
-            password: localStorage.getItem('mqtt_pass') || "Admin123",
+            username: localStorage.getItem('mqtt_user') || DEFAULT_USER,
+            password: localStorage.getItem('mqtt_pass') || DEFAULT_PASS,
             clientId: "Web-" + Math.random().toString(16).substring(2, 10),
             protocolVersion: 4, clean: true
         };
@@ -180,12 +186,13 @@
             setTimeout(() => { window.location.reload(); }, 1500);
         }
 
+        // ==========================================
+        // 2. FUNGSI NAVIGASI
+        // ==========================================
         function switchView(viewId) {
-            // 1. Sembunyikan semua section konten
             document.querySelectorAll(".view-content").forEach(el => el.classList.add("hidden"));
             document.getElementById("view-" + viewId).classList.remove("hidden");
             
-            // 2. Ubah gaya warna tombol navigasi
             document.querySelectorAll(".nav-item").forEach(el => { 
                 el.classList.remove("bg-blue-600", "text-white", "shadow-sm"); 
                 el.classList.add("text-slate-400", "hover:bg-slate-800", "hover:text-slate-200"); 
@@ -196,55 +203,158 @@
                 activeBtn.classList.add("bg-blue-600", "text-white", "shadow-sm"); 
             }
             
-            // 3. Ubah judul halaman
-            const titles = { 
-                dashboard: "Realtime Monitoring Dashboard", 
-                device: "Pengelolaan & Registrasi Perangkat", 
-                history: "Penyaringan Data Riwayat", 
-                settings: "Pengaturan Parameter Cloud" 
-            };
+            const titles = { dashboard: "Realtime Monitoring Dashboard", device: "Pengelolaan & Registrasi Perangkat", history: "Penyaringan Data Riwayat", settings: "Pengaturan Parameter Cloud" };
             document.getElementById("page-title").innerText = titles[viewId] || "IoT Enterprise";
 
-            // 4. [LOGIKA BARU] Sembunyikan kontrol atas jika masuk ke Device/Settings
             const headerControls = document.getElementById("header-controls");
             if (viewId === 'dashboard' || viewId === 'history') {
-                headerControls.classList.remove("hidden");
-                headerControls.classList.add("flex");
+                headerControls.classList.remove("hidden"); headerControls.classList.add("flex");
             } else {
-                headerControls.classList.add("hidden");
-                headerControls.classList.remove("flex");
+                headerControls.classList.add("hidden"); headerControls.classList.remove("flex");
             }
         }
 
-        // =======================================================
-        // LOGIKA TRACKER STATUS (HEARTBEAT)
-        // =======================================================
-        let registeredDevices = JSON.parse(localStorage.getItem('iot_devices')) || [{ id: "mesin-1", name: "ESP32-01", isActive: true }];
-        let currentDeviceId = registeredDevices[0].id;
+        // ==========================================
+        // 3. LOGIKA MULTI-DEVICE & KERTAS KOSONG
+        // ==========================================
+        // [PERBAIKAN] Data default diubah menjadi array kosong []
+        let registeredDevices = JSON.parse(localStorage.getItem('iot_devices')) || [];
         
-        // Objek untuk melacak kapan terakhir kali alat mengirim data (Timestamp)
+        // [PERBAIKAN] Jika kosong, currentDeviceId diset null
+        let currentDeviceId = registeredDevices.length > 0 ? registeredDevices[0].id : null;
+        
         const deviceLastSeen = {};
+        const deviceDropdown = document.getElementById("device-selector");
+        const deviceTableBody = document.getElementById("device-table-body");
 
+        function renderDeviceManagers() {
+            // Render Dropdown Atas
+            deviceDropdown.innerHTML = '';
+            if (registeredDevices.length === 0) {
+                const option = document.createElement("option");
+                option.value = ""; option.text = "Belum Ada Mesin";
+                deviceDropdown.appendChild(option);
+            } else {
+                registeredDevices.forEach(dev => {
+                    const option = document.createElement("option");
+                    option.value = dev.id; option.text = dev.name;
+                    if(dev.id === currentDeviceId) option.selected = true;
+                    deviceDropdown.appendChild(option);
+                });
+            }
+
+            // Render Tabel Device
+            if(!deviceTableBody) return;
+            deviceTableBody.innerHTML = '';
+            if (registeredDevices.length === 0) {
+                deviceTableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500 font-medium">Belum ada perangkat terdaftar. Silakan daftarkan di form atas.</td></tr>';
+            } else {
+                registeredDevices.forEach(dev => {
+                    const isChecked = dev.isActive ? 'checked' : '';
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 border-b border-slate-50";
+                    tr.innerHTML = `
+                        <td class="px-6 py-3.5"><div class="font-bold text-slate-900">${dev.name}</div><div class="font-mono text-[10px] text-slate-400 mt-0.5">${dev.id}</div></td>
+                        <td class="px-6 py-3.5 text-center"><span id="badge-${dev.id}" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-500">OFFLINE</span></td>
+                        <td class="px-6 py-3.5 text-center"><label class="relative inline-flex items-center cursor-pointer mx-auto mt-1"><input type="checkbox" class="sr-only peer" ${isChecked} onchange="togglePower('${dev.id}', this.checked)"><div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div></label></td>
+                        <td class="px-6 py-3.5 text-center"><button onclick="deleteDevice('${dev.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1 mx-auto transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i> Hapus</button></td>
+                    `;
+                    deviceTableBody.appendChild(tr);
+                });
+            }
+            lucide.createIcons();
+            checkDeviceStatuses();
+        }
+
+        function registerDevice() {
+            const nameStr = document.getElementById("dev-name").value.trim();
+            const idStr = document.getElementById("dev-id").value.trim();
+            if(!nameStr || !idStr) return alert("Isi form dengan lengkap!");
+            if(registeredDevices.find(d => d.id === idStr)) return alert("ID Perangkat sudah digunakan!");
+            
+            registeredDevices.push({ id: idStr, name: nameStr, isActive: true });
+            localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
+            document.getElementById("dev-name").value = ''; document.getElementById("dev-id").value = '';
+            
+            // Jika ini mesin pertama, otomatis jadikan fokus utama
+            if (registeredDevices.length === 1) {
+                changeDeviceContext(idStr);
+            } else {
+                renderDeviceManagers();
+            }
+        }
+
+        function deleteDevice(id) {
+            registeredDevices = registeredDevices.filter(d => d.id !== id);
+            localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
+            
+            if (registeredDevices.length === 0) {
+                // Jika semua mesin dihapus, kembalikan ke kondisi kosong
+                currentDeviceId = null;
+                clearDashboard();
+                renderDeviceManagers();
+            } else if (currentDeviceId === id) {
+                changeDeviceContext(registeredDevices[0].id);
+            } else {
+                renderDeviceManagers();
+            }
+        }
+
+        function togglePower(deviceId, isChecked) {
+            client.publish(`kontrol/${deviceId}`, isChecked ? "ON" : "OFF", {qos: 1});
+            const devIndex = registeredDevices.findIndex(d => d.id === deviceId);
+            if(devIndex !== -1) {
+                registeredDevices[devIndex].isActive = isChecked;
+                localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
+            }
+        }
+
+        function changeDeviceContext(newDeviceId) {
+            if(currentDeviceId) client.unsubscribe(`sensor/${currentDeviceId}`);
+            
+            currentDeviceId = newDeviceId;
+            clearDashboard();
+            
+            if (currentDeviceId) {
+                client.subscribe(`sensor/${currentDeviceId}`);
+                fetchHistory(); 
+            }
+            renderDeviceManagers();
+        }
+
+        function clearDashboard() {
+            analyticsChart.data.labels = []; analyticsChart.data.datasets[0].data = []; analyticsChart.data.datasets[1].data = []; analyticsChart.update();
+            document.getElementById("live-table-body").innerHTML = '';
+            document.getElementById("current-suhu").innerText = "-- °C"; 
+            document.getElementById("current-kelembapan").innerText = "-- %";
+            
+            const hBody = document.getElementById("historical-filter-body");
+            if(hBody) hBody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400">Tidak ada data. Silakan pilih atau daftarkan perangkat terlebih dahulu.</td></tr>';
+            checkDeviceStatuses();
+        }
+
+        // =======================================================
+        // 4. LOGIKA TRACKER STATUS (HEARTBEAT)
+        // =======================================================
         function checkDeviceStatuses() {
             const now = Date.now();
-
-            // 1. Update Status Dashboard Utama
             const dashStatusEl = document.getElementById("dashboard-node-status");
             const dashTextEl = document.getElementById("dashboard-node-text");
-            const dashIconEl = document.getElementById("dashboard-node-icon");
 
-            // Jika mesin yang dipilih pernah mengirim data dan datanya masuk < 35 detik yang lalu
-            if (deviceLastSeen[currentDeviceId] && (now - deviceLastSeen[currentDeviceId] < 35000)) {
+            if (!currentDeviceId) {
+                dashStatusEl.innerText = "Kosong";
+                dashTextEl.className = "text-xs text-slate-400 mt-1 flex items-center gap-1";
+                dashTextEl.innerHTML = `<i data-lucide="info" class="w-3.5 h-3.5"></i> Belum ada mesin terdaftar`;
+            } else if (deviceLastSeen[currentDeviceId] && (now - deviceLastSeen[currentDeviceId] < 35000)) {
                 dashStatusEl.innerText = "Online";
                 dashTextEl.className = "text-xs text-emerald-600 mt-1 flex items-center gap-1";
-                dashTextEl.innerHTML = `<span id="dashboard-node-icon"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i></span> Data Aktual Tersinkronisasi`;
+                dashTextEl.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Data Aktual Tersinkronisasi`;
             } else {
                 dashStatusEl.innerText = "Offline";
                 dashTextEl.className = "text-xs text-red-500 mt-1 flex items-center gap-1";
-                dashTextEl.innerHTML = `<span id="dashboard-node-icon"><i data-lucide="x-circle" class="w-3.5 h-3.5"></i></span> Terputus / Menunggu Data Masuk`;
+                dashTextEl.innerHTML = `<i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Terputus / Menunggu Data`;
             }
 
-            // 2. Update Status Baris Tabel di Menu Device
             registeredDevices.forEach(dev => {
                 const badge = document.getElementById(`badge-${dev.id}`);
                 if(badge) {
@@ -260,102 +370,16 @@
             lucide.createIcons();
         }
 
-        // Panggil fungsi pengecek status setiap 5 detik!
         setInterval(checkDeviceStatuses, 5000);
 
         // =======================================================
-        // PENGELOLAAN DEVICE UI
-        // =======================================================
-        const deviceDropdown = document.getElementById("device-selector");
-        const deviceTableBody = document.getElementById("device-table-body");
-
-        function renderDeviceManagers() {
-            deviceDropdown.innerHTML = '';
-            registeredDevices.forEach(dev => {
-                const option = document.createElement("option");
-                option.value = dev.id; option.text = dev.name;
-                if(dev.id === currentDeviceId) option.selected = true;
-                deviceDropdown.appendChild(option);
-            });
-
-            if(!deviceTableBody) return;
-            deviceTableBody.innerHTML = '';
-            registeredDevices.forEach(dev => {
-                const isChecked = dev.isActive ? 'checked' : '';
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 border-b border-slate-50";
-                tr.innerHTML = `
-                    <td class="px-6 py-3.5">
-                        <div class="font-bold text-slate-900">${dev.name}</div>
-                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">${dev.id}</div>
-                    </td>
-                    <td class="px-6 py-3.5 text-center">
-                        <span id="badge-${dev.id}" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-500">OFFLINE</span>
-                    </td>
-                    <td class="px-6 py-3.5 text-center">
-                        <label class="relative inline-flex items-center cursor-pointer mx-auto mt-1">
-                            <input type="checkbox" class="sr-only peer" ${isChecked} onchange="togglePower('${dev.id}', this.checked)">
-                            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
-                    </td>
-                    <td class="px-6 py-3.5 text-center">
-                        <button onclick="deleteDevice('${dev.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1 mx-auto transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i> Hapus</button>
-                    </td>
-                `;
-                deviceTableBody.appendChild(tr);
-            });
-            lucide.createIcons();
-            checkDeviceStatuses(); // Update warna badge seketika
-        }
-
-        function registerDevice() {
-            const nameStr = document.getElementById("dev-name").value.trim();
-            const idStr = document.getElementById("dev-id").value.trim();
-            if(!nameStr || !idStr) return alert("Isi form dengan lengkap!");
-            if(registeredDevices.find(d => d.id === idStr)) return alert("ID Perangkat sudah digunakan!");
-            
-            registeredDevices.push({ id: idStr, name: nameStr, isActive: true });
-            localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
-            document.getElementById("dev-name").value = ''; document.getElementById("dev-id").value = '';
-            renderDeviceManagers();
-        }
-
-        function deleteDevice(id) {
-            if(registeredDevices.length === 1) return alert("Tidak boleh menghapus semua mesin!");
-            registeredDevices = registeredDevices.filter(d => d.id !== id);
-            localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
-            if(currentDeviceId === id) changeDeviceContext(registeredDevices[0].id);
-            else renderDeviceManagers();
-        }
-
-        function togglePower(deviceId, isChecked) {
-            client.publish(`kontrol/${deviceId}`, isChecked ? "ON" : "OFF", {qos: 1});
-            const devIndex = registeredDevices.findIndex(d => d.id === deviceId);
-            if(devIndex !== -1) {
-                registeredDevices[devIndex].isActive = isChecked;
-                localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
-            }
-        }
-
-        function changeDeviceContext(newDeviceId) {
-            currentDeviceId = newDeviceId;
-            
-            // Hapus isi layar sebelumnya
-            analyticsChart.data.labels = []; analyticsChart.data.datasets[0].data = []; analyticsChart.data.datasets[1].data = []; analyticsChart.update();
-            document.getElementById("live-table-body").innerHTML = '';
-            document.getElementById("current-suhu").innerText = "-- °C"; document.getElementById("current-kelembapan").innerText = "-- %";
-
-            checkDeviceStatuses(); // Memaksa update tulisan "Online/Offline" berdasarkan device terpilih
-            fetchHistory(); 
-        }
-
-        // =======================================================
-        // GRAFIK & MQTT CORE
+        // 5. GRAFIK & MQTT CORE
         // =======================================================
         const ctx = document.getElementById('analyticsChart').getContext('2d');
         const analyticsChart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ label: 'Suhu (°C)', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.05)', fill: true, yAxisID: 'y' }, { label: 'Kelembapan (%)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.05)', fill: true, yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left', suggestedMin: 15, suggestedMax: 45 }, y1: { position: 'right', suggestedMin: 30, suggestedMax: 100, grid: { drawOnChartArea: false } } } }});
 
         async function fetchHistory() {
+            if(!currentDeviceId) return;
             const startVal = document.getElementById("filter-start")?.value || '';
             const endVal = document.getElementById("filter-end")?.value || '';
             let url = `/api/history?device_id=${currentDeviceId}`;
@@ -368,25 +392,31 @@
                 const hBody = document.getElementById("historical-filter-body");
                 if(hBody) {
                     hBody.innerHTML = '';
-                    [...logs].reverse().forEach(item => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `<td class="px-6 py-3.5">${new Date(item.waktu).toLocaleString('id-ID')}</td><td class="px-6 py-3.5 text-red-600 font-semibold">${item.suhu} &deg;C</td><td class="px-6 py-3.5 text-blue-600 font-semibold">${item.kelembapan} %</td>`;
-                        hBody.appendChild(tr);
-                    });
+                    if(logs.length === 0) {
+                         hBody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400">Tidak ada riwayat data untuk mesin ini.</td></tr>';
+                    } else {
+                        [...logs].reverse().forEach(item => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `<td class="px-6 py-3.5">${new Date(item.waktu).toLocaleString('id-ID')}</td><td class="px-6 py-3.5 text-red-600 font-semibold">${item.suhu} &deg;C</td><td class="px-6 py-3.5 text-blue-600 font-semibold">${item.kelembapan} %</td>`;
+                            hBody.appendChild(tr);
+                        });
+                    }
                 }
 
-                if(!startVal) {
+                if(!startVal && logs.length > 0) {
                     logs.forEach(item => {
-                        const d = new Date(item.waktu); const w = d.toLocaleTimeString('id-ID');
+                        const w = new Date(item.waktu).toLocaleTimeString('id-ID');
                         analyticsChart.data.labels.push(w); analyticsChart.data.datasets[0].data.push(item.suhu); analyticsChart.data.datasets[1].data.push(item.kelembapan);
                     });
                     analyticsChart.update();
-                    if(logs.length > 0) { document.getElementById("current-suhu").innerText = logs[logs.length-1].suhu + " °C"; document.getElementById("current-kelembapan").innerText = logs[logs.length-1].kelembapan + " %"; }
+                    document.getElementById("current-suhu").innerText = logs[logs.length-1].suhu + " °C"; 
+                    document.getElementById("current-kelembapan").innerText = logs[logs.length-1].kelembapan + " %";
                 }
-            } catch (error) { console.error("API Gagal:", error); }
+            } catch (error) {}
         }
 
         renderDeviceManagers();
+        clearDashboard(); // Pastikan grafik bersih saat pertama buka jika kosong
         
         const client = mqtt.connect(`wss://${brokerUrl}:${port}/mqtt`, mqttOptions);
         client.on("connect", () => {
@@ -394,27 +424,21 @@
             sb.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
             sb.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Broker Connected`;
             
-            // Web mendengarkan SEMUA jalur sensor untuk melacak siapa saja yang Online/Offline
             client.subscribe(`sensor/#`);
-            fetchHistory();
+            if(currentDeviceId) fetchHistory();
         });
 
         client.on("message", (topic, message) => {
             try {
-                // Topic format: "sensor/mesin-1"
                 const parts = topic.split('/');
                 if(parts[0] !== 'sensor') return;
                 
-                const msgDeviceId = parts[1]; // Mendapatkan ID mesin yang baru saja mengirim data
-                
-                // 1. UPDATE TRACKER: Catat waktu alat ini berdetak!
+                const msgDeviceId = parts[1]; 
                 deviceLastSeen[msgDeviceId] = Date.now();
-                checkDeviceStatuses(); // Segarkan tampilan status (Online/Offline) seketika
+                checkDeviceStatuses(); 
 
-                // 2. CEK KONTEKS: Jika data dari mesin ini BUKAN yang sedang dilihat user di layar, maka berhentikan eksekusi di sini.
                 if(msgDeviceId !== currentDeviceId) return; 
 
-                // 3. TAMPILKAN DATA: Jika cocok, gambarkan ke grafik dan tabel layar
                 const data = JSON.parse(message.toString());
                 const w = new Date().toLocaleTimeString('id-ID');
 
