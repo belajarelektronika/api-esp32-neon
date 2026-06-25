@@ -1,81 +1,38 @@
 import { neon } from '@neondatabase/serverless';
 
 export default async function handler(req, res) {
+  // 1. Validasi: Hanya izinkan metode POST dari ESP32
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Metode tidak diizinkan. Gunakan POST.' });
+  }
+
   try {
-    // Membuka koneksi menggunakan cara yang sama persis dengan api/save
+    // 2. Buka koneksi ke Database Neon
     const sql = neon(process.env.DATABASE_URL);
+    
+    // 3. Tangkap data yang dikirim oleh ESP32
+    const { device_id, suhu, kelembapan } = req.body;
 
-    // --------------------------------------------------------
-    // JALUR 1: GET (Mengambil Histori untuk Grafik & Tabel)
-    // --------------------------------------------------------
-    if (req.method === 'GET') {
-      const { device_id, start, end } = req.query;
-
-      if (!device_id) {
-        return res.status(400).json({ error: "device_id wajib diisi" });
-      }
-
-      let data;
-      // Jika user mengisi rentang waktu di menu pencarian
-      if (start && end) {
-        data = await sql`
-          SELECT * FROM data_sensor 
-          WHERE device_id = ${device_id} 
-          AND waktu >= ${start} 
-          AND waktu <= ${end} 
-          ORDER BY waktu DESC LIMIT 100
-        `;
-      } 
-      // Jika ditarik otomatis (awal buka web) tanpa rentang waktu
-      else {
-        data = await sql`
-          SELECT * FROM data_sensor 
-          WHERE device_id = ${device_id} 
-          ORDER BY waktu DESC LIMIT 100
-        `;
-      }
-
-      // Langsung kembalikan datanya ke web
-      return res.status(200).json(data);
+    // 4. Validasi isi data agar database tidak error jika ada yang kosong
+    if (!device_id || suhu === undefined || kelembapan === undefined) {
+      return res.status(400).json({ error: 'Data tidak lengkap. Pastikan ada device_id, suhu, dan kelembapan.' });
     }
 
-    // --------------------------------------------------------
-    // JALUR 2: DELETE (Menghapus Histori Permanen)
-    // --------------------------------------------------------
-    else if (req.method === 'DELETE') {
-      const { device_id, start, end } = req.body;
+    // 5. Simpan ke dalam tabel 'data_sensor'
+    await sql`
+      INSERT INTO data_sensor (device_id, suhu, kelembapan)
+      VALUES (${device_id}, ${suhu}, ${kelembapan})
+    `;
 
-      if (!device_id || !start || !end) {
-        return res.status(400).json({ error: "Pilih mesin dan rentang waktu dengan lengkap!" });
-      }
-
-      // Menghapus dan meminta database mengembalikan ID yang terhapus (RETURNING id) 
-      // untuk dihitung jumlahnya
-      const result = await sql`
-        DELETE FROM data_sensor 
-        WHERE device_id = ${device_id} 
-        AND waktu >= ${start} 
-        AND waktu <= ${end}
-        RETURNING id
-      `;
-
-      return res.status(200).json({ 
-        success: true, 
-        message: "Penghapusan berhasil",
-        deleted_count: result.length 
-      });
-    }
-
-    // --------------------------------------------------------
-    // JALUR 3: Tolak Selain GET dan DELETE
-    // --------------------------------------------------------
-    else {
-      res.setHeader('Allow', ['GET', 'DELETE']);
-      return res.status(405).json({ error: 'Metode tidak diizinkan' });
-    }
+    // 6. Berikan balasan sukses ke ESP32 (Kode 200)
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Data berhasil disimpan ke database Neon!' 
+    });
 
   } catch (error) {
-    console.error("Terjadi error di API History:", error);
+    // 7. Tangani error jika terjadi masalah di server atau database
+    console.error("Gagal menyimpan data dari ESP32:", error);
     return res.status(500).json({ error: error.message });
   }
 }
