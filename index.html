@@ -147,7 +147,7 @@
         </div>
     </div>
 
-   <script>
+  <script>
         lucide.createIcons();
 
         // ==========================================
@@ -214,7 +214,6 @@
         let registeredDevices = JSON.parse(localStorage.getItem('iot_devices')) || [];
         let currentDeviceId = registeredDevices.length > 0 ? registeredDevices[0].id : null;
         
-       // Sekarang kita menyimpan teks "ONLINE" atau "OFFLINE", bukan lagi timestamp waktu
         const deviceStatusMap = {};
         const deviceDropdown = document.getElementById("device-selector");
         const deviceTableBody = document.getElementById("device-table-body");
@@ -346,13 +345,11 @@
         // =======================================================
         // 4. LOGIKA TRACKER STATUS (OPTIMASI ANTI MACET 100%)
         // =======================================================
-        
-        // Ikon SVG Murni (Sangat ringan, tidak bikin RAM meledak)
         const iconSuccess = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
         const iconError = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
         const iconInfo = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
-function checkDeviceStatuses() {
+        function checkDeviceStatuses() {
             const dashStatusEl = document.getElementById("dashboard-node-status");
             const dashTextEl = document.getElementById("dashboard-node-text");
 
@@ -361,7 +358,6 @@ function checkDeviceStatuses() {
                 dashTextEl.className = "text-xs text-slate-400 mt-1 flex items-center gap-1";
                 dashTextEl.innerHTML = `${iconInfo} Belum ada mesin terdaftar`;
             } 
-            // CEK STATUS LANGSUNG DARI MAP MQTT (Tidak lagi menghitung waktu)
             else if (deviceStatusMap[currentDeviceId] === 'ONLINE') {
                 dashStatusEl.innerText = "Online";
                 dashTextEl.className = "text-xs text-emerald-600 mt-1 flex items-center gap-1";
@@ -372,7 +368,6 @@ function checkDeviceStatuses() {
                 dashTextEl.innerHTML = `${iconError} Mesin Mati / Terputus`;
             }
 
-            // Update Badge di Tabel Bawah
             registeredDevices.forEach(dev => {
                 const badge = document.getElementById(`badge-${dev.id}`);
                 if(badge) {
@@ -387,10 +382,6 @@ function checkDeviceStatuses() {
             });
         }
 
-        // PERHATIAN: Baris setInterval(checkDeviceStatuses, 5000); SUDAH DIHAPUS DARI SINI
-        // Web sekarang murni menunggu reaksi otomatis dari MQTT LWT.
-
-        // Loop tracker berjalan dengan sangat enteng sekarang
         setInterval(checkDeviceStatuses, 5000);
 
         // =======================================================
@@ -406,12 +397,7 @@ function checkDeviceStatuses() {
             let url = `/api/history?device_id=${currentDeviceId}`;
             if(startVal && endVal) url += `&start=${encodeURIComponent(startVal)}&end=${encodeURIComponent(endVal)}`;
 
-            // ==========================================
-            // FITUR KOREKSI ZONA WAKTU VERCEL
-            // ==========================================
-            // Jika jam di web KECEPATAN 7 jam, biarkan angkanya -7
-            // Jika jam di web KELAMBATAN 7 jam, ganti angkanya menjadi 7
-            // Jika sudah pas, ganti menjadi 0
+            // KOREKSI JAM
             const KOREKSI_JAM = -7; 
 
             try {
@@ -425,7 +411,6 @@ function checkDeviceStatuses() {
                          hBody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400">Tidak ada riwayat data untuk mesin ini.</td></tr>';
                     } else {
                         [...logs].reverse().forEach(item => {
-                            // Proses koreksi jam untuk Tabel
                             let d = new Date(item.waktu);
                             d.setHours(d.getHours() + KOREKSI_JAM);
                             let waktuTampil = d.toLocaleString('id-ID');
@@ -439,7 +424,6 @@ function checkDeviceStatuses() {
 
                 if(!startVal && logs.length > 0) {
                     logs.forEach(item => {
-                        // Proses koreksi jam untuk Grafik
                         let d = new Date(item.waktu);
                         d.setHours(d.getHours() + KOREKSI_JAM);
                         const w = d.toLocaleTimeString('id-ID');
@@ -458,23 +442,43 @@ function checkDeviceStatuses() {
             }
         }
 
+        // --- BAGIAN INI YANG SEBELUMNYA TIDAK SENGAJA TERHAPUS ---
+        renderDeviceManagers();
+        clearDashboard(); 
+        
+        const client = mqtt.connect(`wss://${brokerUrl}:${port}/mqtt`, mqttOptions);
+        client.on("connect", () => {
+            const sb = document.getElementById("status-badge");
+            sb.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
+            sb.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Broker Connected`;
+            
+            client.subscribe(`sensor/#`);
+            client.subscribe(`status/#`); 
+            
+            if(currentDeviceId) fetchHistory();
+        });
+        // ---------------------------------------------------------
+
         client.on("message", (topic, message) => {
             try {
                 const parts = topic.split('/');
-                const topicType = parts[0]; // Isinya "sensor" atau "status"
+                const topicType = parts[0]; 
                 const msgDeviceId = parts[1]; 
                 
-                // --- JALUR 1: UPDATE STATUS ONLINE/OFFLINE DARI LWT ---
                 if (topicType === 'status') {
-                    const statusVal = message.toString(); // Isinya "ONLINE" atau "OFFLINE"
+                    const statusVal = message.toString(); 
                     deviceStatusMap[msgDeviceId] = statusVal;
-                    checkDeviceStatuses(); // Perbarui warna logo detik itu juga
-                    return; // Berhenti di sini, jangan teruskan ke logika grafik
+                    checkDeviceStatuses(); 
+                    return; 
                 }
 
-                // --- JALUR 2: UPDATE GRAFIK & ANGKA DARI SENSOR ---
                 if (topicType === 'sensor') {
-                    // Hanya update layar jika data milik mesin yang sedang dipilih
+                    // Pelindung status otomatis
+                    if (deviceStatusMap[msgDeviceId] !== 'ONLINE') {
+                        deviceStatusMap[msgDeviceId] = 'ONLINE';
+                        checkDeviceStatuses();
+                    }
+
                     if(msgDeviceId !== currentDeviceId) return; 
 
                     const data = JSON.parse(message.toString());
