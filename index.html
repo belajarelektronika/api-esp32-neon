@@ -214,7 +214,8 @@
         let registeredDevices = JSON.parse(localStorage.getItem('iot_devices')) || [];
         let currentDeviceId = registeredDevices.length > 0 ? registeredDevices[0].id : null;
         
-        const deviceLastSeen = {};
+       // Sekarang kita menyimpan teks "ONLINE" atau "OFFLINE", bukan lagi timestamp waktu
+        const deviceStatusMap = {};
         const deviceDropdown = document.getElementById("device-selector");
         const deviceTableBody = document.getElementById("device-table-body");
 
@@ -351,8 +352,7 @@
         const iconError = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
         const iconInfo = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
 
-        function checkDeviceStatuses() {
-            const now = Date.now();
+function checkDeviceStatuses() {
             const dashStatusEl = document.getElementById("dashboard-node-status");
             const dashTextEl = document.getElementById("dashboard-node-text");
 
@@ -360,20 +360,23 @@
                 dashStatusEl.innerText = "Kosong";
                 dashTextEl.className = "text-xs text-slate-400 mt-1 flex items-center gap-1";
                 dashTextEl.innerHTML = `${iconInfo} Belum ada mesin terdaftar`;
-            } else if (deviceLastSeen[currentDeviceId] && (now - deviceLastSeen[currentDeviceId] < 35000)) {
+            } 
+            // CEK STATUS LANGSUNG DARI MAP MQTT (Tidak lagi menghitung waktu)
+            else if (deviceStatusMap[currentDeviceId] === 'ONLINE') {
                 dashStatusEl.innerText = "Online";
                 dashTextEl.className = "text-xs text-emerald-600 mt-1 flex items-center gap-1";
-                dashTextEl.innerHTML = `${iconSuccess} Data Aktual Tersinkronisasi`;
+                dashTextEl.innerHTML = `${iconSuccess} Terkoneksi (Menunggu Data...)`;
             } else {
                 dashStatusEl.innerText = "Offline";
                 dashTextEl.className = "text-xs text-red-500 mt-1 flex items-center gap-1";
-                dashTextEl.innerHTML = `${iconError} Terputus / Menunggu Data`;
+                dashTextEl.innerHTML = `${iconError} Mesin Mati / Terputus`;
             }
 
+            // Update Badge di Tabel Bawah
             registeredDevices.forEach(dev => {
                 const badge = document.getElementById(`badge-${dev.id}`);
                 if(badge) {
-                    if (deviceLastSeen[dev.id] && (now - deviceLastSeen[dev.id] < 35000)) {
+                    if (deviceStatusMap[dev.id] === 'ONLINE') {
                         badge.className = "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800 transition-colors";
                         badge.innerText = "ONLINE";
                     } else {
@@ -383,6 +386,9 @@
                 }
             });
         }
+
+        // PERHATIAN: Baris setInterval(checkDeviceStatuses, 5000); SUDAH DIHAPUS DARI SINI
+        // Web sekarang murni menunggu reaksi otomatis dari MQTT LWT.
 
         // Loop tracker berjalan dengan sangat enteng sekarang
         setInterval(checkDeviceStatuses, 5000);
@@ -434,42 +440,62 @@
         clearDashboard(); 
         
         const client = mqtt.connect(`wss://${brokerUrl}:${port}/mqtt`, mqttOptions);
-        client.on("connect", () => {
+       client.on("connect", () => {
             const sb = document.getElementById("status-badge");
             sb.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
             sb.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Broker Connected`;
             
+            // 1. TAMBAHKAN SUBSCRIBE KE TOPIK STATUS UNTUK SEMUA MESIN
             client.subscribe(`sensor/#`);
+            client.subscribe(`status/#`); 
+            
             if(currentDeviceId) fetchHistory();
         });
 
         client.on("message", (topic, message) => {
             try {
                 const parts = topic.split('/');
-                if(parts[0] !== 'sensor') return;
-                
+                const topicType = parts[0]; // Isinya "sensor" atau "status"
                 const msgDeviceId = parts[1]; 
-                deviceLastSeen[msgDeviceId] = Date.now();
-                checkDeviceStatuses(); 
+                
+                // --- JALUR 1: UPDATE STATUS ONLINE/OFFLINE DARI LWT ---
+                if (topicType === 'status') {
+                    const statusVal = message.toString(); // Isinya "ONLINE" atau "OFFLINE"
+                    deviceStatusMap[msgDeviceId] = statusVal;
+                    checkDeviceStatuses(); // Perbarui warna logo detik itu juga
+                    return; // Berhenti di sini, jangan teruskan ke logika grafik
+                }
 
-                if(msgDeviceId !== currentDeviceId) return; 
+                // --- JALUR 2: UPDATE GRAFIK & ANGKA DARI SENSOR ---
+                if (topicType === 'sensor') {
+                    // Hanya update layar jika data milik mesin yang sedang dipilih
+                    if(msgDeviceId !== currentDeviceId) return; 
 
-                const data = JSON.parse(message.toString());
-                const w = new Date().toLocaleTimeString('id-ID');
+                    const data = JSON.parse(message.toString());
+                    const w = new Date().toLocaleTimeString('id-ID');
 
-                document.getElementById("current-suhu").innerText = data.suhu + " °C";
-                document.getElementById("current-kelembapan").innerText = data.kelembapan + " %";
+                    document.getElementById("current-suhu").innerText = data.suhu + " °C";
+                    document.getElementById("current-kelembapan").innerText = data.kelembapan + " %";
 
-                analyticsChart.data.labels.push(w); analyticsChart.data.datasets[0].data.push(data.suhu); analyticsChart.data.datasets[1].data.push(data.kelembapan);
-                if (analyticsChart.data.labels.length > 30) { analyticsChart.data.labels.shift(); analyticsChart.data.datasets[0].data.shift(); analyticsChart.data.datasets[1].data.shift(); }
-                analyticsChart.update();
+                    analyticsChart.data.labels.push(w); 
+                    analyticsChart.data.datasets[0].data.push(data.suhu); 
+                    analyticsChart.data.datasets[1].data.push(data.kelembapan);
+                    if (analyticsChart.data.labels.length > 30) { 
+                        analyticsChart.data.labels.shift(); 
+                        analyticsChart.data.datasets[0].data.shift(); 
+                        analyticsChart.data.datasets[1].data.shift(); 
+                    }
+                    analyticsChart.update();
 
-                const tb = document.getElementById("live-table-body");
-                const nr = document.createElement('tr');
-                nr.innerHTML = `<td class="px-4 py-2">${w}</td><td class="px-4 py-2 text-red-500 font-semibold">${data.suhu} &deg;C</td><td class="px-4 py-2 text-blue-500 font-semibold">${data.kelembapan} %</td>`;
-                tb.insertBefore(nr, tb.firstChild);
-                if(tb.children.length > 25) tb.lastChild.remove();
-            } catch (e) {}
+                    const tb = document.getElementById("live-table-body");
+                    const nr = document.createElement('tr');
+                    nr.innerHTML = `<td class="px-4 py-2">${w}</td><td class="px-4 py-2 text-red-500 font-semibold">${data.suhu} &deg;C</td><td class="px-4 py-2 text-blue-500 font-semibold">${data.kelembapan} %</td>`;
+                    tb.insertBefore(nr, tb.firstChild);
+                    if(tb.children.length > 25) tb.lastChild.remove();
+                }
+            } catch (e) {
+                console.error("Gagal memproses pesan MQTT", e);
+            }
         });
     </script>
 </body>
