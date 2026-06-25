@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+const { Pool } = require('pg');
 
 // Inisialisasi koneksi ke Database Neon
 // Pastikan DATABASE_URL sudah terpasang di Environment Variables Vercel Anda
