@@ -79,8 +79,39 @@
 
             <section id="view-device" class="view-content space-y-6 hidden">
                 <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm max-w-4xl">
-                    <div class="flex justify-between items-center mb-6"><div><h3 class="text-base font-bold text-slate-900">Daftar Node Perangkat Terdaftar</h3><p class="text-xs text-slate-400">Pengembangan lanjutan untuk CRUD perangkat</p></div></div>
-                    <table class="w-full text-left text-sm border border-slate-100 rounded-lg overflow-hidden"><thead class="bg-slate-50 text-xs font-semibold text-slate-500 border-b border-slate-200"><tr><th class="px-6 py-3">ID Device</th><th class="px-6 py-3">Tipe Modul</th><th class="px-6 py-3">Status</th></tr></thead><tbody class="divide-y divide-slate-100 text-slate-600"><tr class="hover:bg-slate-50/80"><td class="px-6 py-3.5 font-medium text-slate-900">ESP32-S3-CORE-01</td><td class="px-6 py-3.5">ESP32-S3 Dev Module</td><td class="px-6 py-3.5"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">Aktif</span></td></tr></tbody></table>
+                    <h3 class="text-base font-bold text-slate-900 mb-1">Registrasi Perangkat Baru</h3>
+                    <p class="text-xs text-slate-400 mb-4">Daftarkan ID dan Topik Kontrol alat untuk membuka akses kendali jarak jauh.</p>
+                    
+                    <div class="flex gap-3 items-end bg-slate-50 p-4 rounded-lg border border-slate-100">
+                        <div class="flex-1">
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Nama Perangkat</label>
+                            <input type="text" id="dev-name" placeholder="Contoh: Mesin Tas Line 1" class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">Topik Kontrol MQTT</label>
+                            <input type="text" id="dev-topic" placeholder="Contoh: esp32/kontrol" class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                        </div>
+                        <button onclick="registerDevice()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-4 rounded-md h-[38px] transition-all">
+                            Daftarkan
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm max-w-4xl">
+                    <h3 class="text-base font-bold text-slate-900 mb-4">Pusat Kendali Perangkat Terdaftar</h3>
+                    <table class="w-full text-left text-sm border border-slate-100 rounded-lg overflow-hidden">
+                        <thead class="bg-slate-50 text-xs font-semibold text-slate-500 border-b border-slate-200">
+                            <tr>
+                                <th class="px-6 py-3">Nama Perangkat</th>
+                                <th class="px-6 py-3">Topik Perintah</th>
+                                <th class="px-6 py-3 text-center">Status Jaringan</th>
+                                <th class="px-6 py-3 text-center">Power Kontrol</th>
+                                <th class="px-6 py-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="device-table-body" class="divide-y divide-slate-100 text-slate-600">
+                            </tbody>
+                    </table>
                 </div>
             </section>
 
@@ -306,6 +337,94 @@
 
             } catch (e) { console.error("Format data rusak:", e); }
         });
+        // ==========================================
+        // LOGIKA PENGELOLAAN & KONTROL DEVICE
+        // ==========================================
+        
+        // Membaca data perangkat dari Local Storage, jika kosong beri 1 default
+        let registeredDevices = JSON.parse(localStorage.getItem('iot_devices')) || [
+            { id: Date.now(), name: "ESP32 Utama", topic: "esp32/kontrol", isActive: true }
+        ];
+
+        const deviceTableBody = document.getElementById("device-table-body");
+
+        function renderDevices() {
+            deviceTableBody.innerHTML = '';
+            registeredDevices.forEach(dev => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-3.5 font-bold text-slate-900">${dev.name}</td>
+                    <td class="px-6 py-3.5 font-mono text-xs text-blue-600">${dev.topic}</td>
+                    <td class="px-6 py-3.5 text-center">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                            ONLINE
+                        </span>
+                    </td>
+                    <td class="px-6 py-3.5 text-center">
+                        <label class="relative inline-flex items-center cursor-pointer mx-auto">
+                            <input type="checkbox" class="sr-only peer" ${dev.isActive ? 'checked' : ''} onchange="toggleDeviceCommand('${dev.topic}', this.checked, ${dev.id})">
+                            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </td>
+                    <td class="px-6 py-3.5 text-center">
+                        <button onclick="deleteDevice(${dev.id})" class="text-red-500 hover:text-red-700 font-semibold text-xs flex items-center gap-1 mx-auto transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus
+                        </button>
+                    </td>
+                `;
+                deviceTableBody.appendChild(tr);
+            });
+            lucide.createIcons(); // Segarkan icon
+        }
+
+        function registerDevice() {
+            const nameInput = document.getElementById("dev-name");
+            const topicInput = document.getElementById("dev-topic");
+
+            if (!nameInput.value || !topicInput.value) {
+                alert("Mohon isi Nama dan Topik perangkat!");
+                return;
+            }
+
+            // Tambahkan ke array dan simpan ke Local Storage
+            registeredDevices.push({
+                id: Date.now(),
+                name: nameInput.value,
+                topic: topicInput.value,
+                isActive: true
+            });
+
+            localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
+            nameInput.value = ''; topicInput.value = '';
+            renderDevices();
+        }
+
+        function deleteDevice(id) {
+            registeredDevices = registeredDevices.filter(dev => dev.id !== id);
+            localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
+            renderDevices();
+        }
+
+        // FUNGSI INTI: Mengirim Perintah ON/OFF lewat MQTT
+        function toggleDeviceCommand(topicTarget, isChecked, deviceId) {
+            const payload = isChecked ? "ON" : "OFF";
+            
+            // Mengirim data publikasi ke broker HiveMQ
+            client.publish(topicTarget, payload, { qos: 1 });
+            
+            // Update status state di memori agar posisi sakelar tersimpan
+            const devIndex = registeredDevices.findIndex(d => d.id === deviceId);
+            if(devIndex !== -1) {
+                registeredDevices[devIndex].isActive = isChecked;
+                localStorage.setItem('iot_devices', JSON.stringify(registeredDevices));
+            }
+
+            console.log(`Perintah [${payload}] telah dikirim ke topik: ${topicTarget}`);
+        }
+
+        // Panggil render saat halaman pertama kali dibuka
+        renderDevices();
     </script>
 </body>
 </html>
