@@ -32,7 +32,7 @@
                 </button>
             </nav>
         </div>
-        <div class="p-4 border-t border-slate-800 bg-slate-950/40 text-xs text-slate-500 text-center font-mono">v2.2.0-Stable</div>
+        <div class="p-4 border-t border-slate-800 bg-slate-950/40 text-xs text-slate-500 text-center font-mono">v2.3.0-Stable</div>
     </aside>
 
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -143,11 +143,39 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="bg-white rounded-xl border border-red-200 p-6 shadow-sm max-w-3xl space-y-4 mt-6">
+                    <div>
+                        <h3 class="text-base font-bold text-red-600 flex items-center gap-2"><i data-lucide="trash-2" class="w-5 h-5"></i> Manajemen Database (Hapus Riwayat)</h3>
+                        <p class="text-xs text-slate-500 mt-1">Hapus data riwayat dari database Neon secara permanen berdasarkan rentang waktu.</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-red-50/30 p-4 rounded-lg border border-red-100">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Pilih Mesin Target</label>
+                            <select id="del-device" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-red-500"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Mulai dari Waktu</label>
+                            <input type="datetime-local" id="del-start" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Sampai dengan Waktu</label>
+                            <input type="datetime-local" id="del-end" class="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-red-500">
+                        </div>
+                        <div class="sm:col-span-2 pt-2 flex items-center gap-4">
+                            <button onclick="executeDeleteHistory()" class="bg-red-600 hover:bg-red-700 text-white text-sm font-semibold py-2.5 px-5 rounded-lg flex items-center gap-2 shadow-sm transition-all duration-200">
+                                <i data-lucide="alert-triangle" class="w-4 h-4"></i> Eksekusi Penghapusan
+                            </button>
+                            <span id="del-notif" class="text-xs font-semibold hidden flex items-center gap-1"></span>
+                        </div>
+                    </div>
+                </div>
+
             </section>
         </div>
     </div>
 
-  <script>
+   <script>
         lucide.createIcons();
 
         // ==========================================
@@ -233,47 +261,63 @@
                 });
             }
 
-            if(!deviceTableBody) return;
-            deviceTableBody.innerHTML = '';
-            
-            if (registeredDevices.length === 0) {
-                deviceTableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500 font-medium">Belum ada perangkat terdaftar. Silakan daftarkan di form atas.</td></tr>';
-            } else {
-                registeredDevices.forEach(dev => {
-                    const isChecked = dev.isActive ? 'checked' : '';
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 border-b border-slate-50 transition-colors";
-                    
-                    tr.innerHTML = `
-                        <td class="px-6 py-3.5">
-                            <div class="flex items-center gap-3">
-                                <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg shadow-sm border border-blue-100">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="16" rx="2" ry="2" stroke-width="2"></rect><rect x="9" y="9" width="6" height="6" stroke-width="2"></rect><line x1="9" y1="1" x2="9" y2="4" stroke-width="2"></line><line x1="15" y1="1" x2="15" y2="4" stroke-width="2"></line><line x1="9" y1="20" x2="9" y2="23" stroke-width="2"></line><line x1="15" y1="20" x2="15" y2="23" stroke-width="2"></line><line x1="20" y1="9" x2="23" y2="9" stroke-width="2"></line><line x1="20" y1="14" x2="23" y2="14" stroke-width="2"></line><line x1="1" y1="9" x2="4" y2="9" stroke-width="2"></line><line x1="1" y1="14" x2="4" y2="14" stroke-width="2"></line></svg>
+            if(deviceTableBody) {
+                deviceTableBody.innerHTML = '';
+                if (registeredDevices.length === 0) {
+                    deviceTableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500 font-medium">Belum ada perangkat terdaftar. Silakan daftarkan di form atas.</td></tr>';
+                } else {
+                    registeredDevices.forEach(dev => {
+                        const isChecked = dev.isActive ? 'checked' : '';
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-slate-50 border-b border-slate-50 transition-colors";
+                        
+                        tr.innerHTML = `
+                            <td class="px-6 py-3.5">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg shadow-sm border border-blue-100">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="16" height="16" rx="2" ry="2" stroke-width="2"></rect><rect x="9" y="9" width="6" height="6" stroke-width="2"></rect><line x1="9" y1="1" x2="9" y2="4" stroke-width="2"></line><line x1="15" y1="1" x2="15" y2="4" stroke-width="2"></line><line x1="9" y1="20" x2="9" y2="23" stroke-width="2"></line><line x1="15" y1="20" x2="15" y2="23" stroke-width="2"></line><line x1="20" y1="9" x2="23" y2="9" stroke-width="2"></line><line x1="20" y1="14" x2="23" y2="14" stroke-width="2"></line><line x1="1" y1="9" x2="4" y2="9" stroke-width="2"></line><line x1="1" y1="14" x2="4" y2="14" stroke-width="2"></line></svg>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-900">${dev.name}</div>
+                                        <div class="font-mono text-[10px] text-slate-400 mt-0.5">ID: ${dev.id}</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="font-bold text-slate-900">${dev.name}</div>
-                                    <div class="font-mono text-[10px] text-slate-400 mt-0.5">ID: ${dev.id}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-3.5 text-center">
-                            <span id="badge-${dev.id}" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-500">OFFLINE</span>
-                        </td>
-                        <td class="px-6 py-3.5 text-center">
-                            <label class="relative inline-flex items-center cursor-pointer mx-auto mt-1">
-                                <input type="checkbox" class="sr-only peer" ${isChecked} onchange="togglePower('${dev.id}', this.checked)">
-                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                            </label>
-                        </td>
-                        <td class="px-6 py-3.5 text-center">
-                            <button onclick="deleteDevice('${dev.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1 mx-auto transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus
-                            </button>
-                        </td>
-                    `;
-                    deviceTableBody.appendChild(tr);
-                });
+                            </td>
+                            <td class="px-6 py-3.5 text-center">
+                                <span id="badge-${dev.id}" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-500">OFFLINE</span>
+                            </td>
+                            <td class="px-6 py-3.5 text-center">
+                                <label class="relative inline-flex items-center cursor-pointer mx-auto mt-1">
+                                    <input type="checkbox" class="sr-only peer" ${isChecked} onchange="togglePower('${dev.id}', this.checked)">
+                                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </td>
+                            <td class="px-6 py-3.5 text-center">
+                                <button onclick="deleteDevice('${dev.id}')" class="text-red-500 hover:text-red-700 text-xs font-semibold flex items-center gap-1 mx-auto transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Hapus
+                                </button>
+                            </td>
+                        `;
+                        deviceTableBody.appendChild(tr);
+                    });
+                }
             }
+            
+            // Render pilihan dropdown di menu Hapus History
+            const delDropdown = document.getElementById("del-device");
+            if(delDropdown) {
+                delDropdown.innerHTML = '';
+                if (registeredDevices.length === 0) {
+                    delDropdown.innerHTML = '<option value="">Belum Ada Mesin</option>';
+                } else {
+                    registeredDevices.forEach(dev => {
+                        const opt = document.createElement("option");
+                        opt.value = dev.id; opt.text = dev.name;
+                        delDropdown.appendChild(opt);
+                    });
+                }
+            }
+
             checkDeviceStatuses();
         }
 
@@ -385,7 +429,7 @@
         setInterval(checkDeviceStatuses, 5000);
 
         // =======================================================
-        // 5. GRAFIK & MQTT CORE
+        // 5. GRAFIK, HISTORI & HAPUS DATA
         // =======================================================
         const ctx = document.getElementById('analyticsChart').getContext('2d');
         const analyticsChart = new Chart(ctx, { type: 'line', data: { labels: [], datasets: [{ label: 'Suhu (°C)', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.05)', fill: true, yAxisID: 'y' }, { label: 'Kelembapan (%)', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.05)', fill: true, yAxisID: 'y1' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left', suggestedMin: 15, suggestedMax: 45 }, y1: { position: 'right', suggestedMin: 30, suggestedMax: 100, grid: { drawOnChartArea: false } } } }});
@@ -397,7 +441,6 @@
             let url = `/api/history?device_id=${currentDeviceId}`;
             if(startVal && endVal) url += `&start=${encodeURIComponent(startVal)}&end=${encodeURIComponent(endVal)}`;
 
-            // KOREKSI JAM
             const KOREKSI_JAM = -7; 
 
             try {
@@ -442,7 +485,61 @@
             }
         }
 
-        // --- BAGIAN INI YANG SEBELUMNYA TIDAK SENGAJA TERHAPUS ---
+        async function executeDeleteHistory() {
+            const devId = document.getElementById("del-device").value;
+            const startVal = document.getElementById("del-start").value;
+            const endVal = document.getElementById("del-end").value;
+            const notif = document.getElementById("del-notif");
+
+            if (!devId || !startVal || !endVal) {
+                return alert("Pilih mesin dan rentang waktu dengan lengkap!");
+            }
+
+            const konfirmasi = confirm(`PERINGATAN!\n\nAnda yakin ingin MENGHAPUS PERMANEN data histori untuk '${devId}'\ndari ${startVal} sampai ${endVal}?\n\nData yang dihapus tidak dapat dikembalikan.`);
+            if (!konfirmasi) return;
+
+            notif.innerHTML = `<span class="w-3 h-3 rounded-full border-2 border-amber-500 border-t-transparent animate-spin"></span> Sedang memproses...`;
+            notif.className = "text-xs font-semibold text-amber-600 flex items-center gap-1.5";
+            notif.classList.remove("hidden");
+
+            try {
+                // Menembak Vercel API dengan metode DELETE
+                const response = await fetch(`/api/history`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        device_id: devId,
+                        start: startVal,
+                        end: endVal
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    notif.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4"></i> Berhasil menghapus data`;
+                    notif.className = "text-xs font-semibold text-emerald-600 flex items-center gap-1";
+                    lucide.createIcons();
+                    
+                    // Segarkan grafik jika mesin yang dihapus sama dengan yang sedang dilihat di Dashboard
+                    if(devId === currentDeviceId) {
+                        clearDashboard();
+                        fetchHistory();
+                    }
+                } else {
+                    notif.innerHTML = `<i data-lucide="x-circle" class="w-4 h-4"></i> Gagal: ${result.error || 'Server Error'}`;
+                    notif.className = "text-xs font-semibold text-red-600 flex items-center gap-1";
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                notif.innerHTML = `<i data-lucide="x-circle" class="w-4 h-4"></i> Gagal terhubung ke server Vercel`;
+                notif.className = "text-xs font-semibold text-red-600 flex items-center gap-1";
+                lucide.createIcons();
+            }
+
+            setTimeout(() => { notif.classList.add("hidden"); }, 6000);
+        }
+
         renderDeviceManagers();
         clearDashboard(); 
         
@@ -457,7 +554,6 @@
             
             if(currentDeviceId) fetchHistory();
         });
-        // ---------------------------------------------------------
 
         client.on("message", (topic, message) => {
             try {
@@ -473,7 +569,6 @@
                 }
 
                 if (topicType === 'sensor') {
-                    // Pelindung status otomatis
                     if (deviceStatusMap[msgDeviceId] !== 'ONLINE') {
                         deviceStatusMap[msgDeviceId] = 'ONLINE';
                         checkDeviceStatuses();
