@@ -214,10 +214,16 @@
         // ==========================================
         const brokerUrl = "4f113aa3117e44698b320c66714caec7.s1.eu.hivemq.cloud"; // MASUKKAN CLUSTER URL ANDA
         const port = 8884;
+        // Cari bagian ini di index.html Anda, lalu sesuaikan:
         const mqttOptions = {
-            username: "admin", // MASUKKAN USERNAME ANDA
-            password: "Admin123", // MASUKKAN PASSWORD ANDA
-            clientId: "Web-Enterprise-" + Math.random().toString(16).substring(2, 10)
+            username: "USERNAME_HIVEMQ_ANDA", // Masukkan username Anda
+            password: "PASSWORD_HIVEMQ_ANDA", // Masukkan password Anda
+            clientId: "Web-Enterprise-" + Math.random().toString(16).substring(2, 10),
+            
+            // --- TAMBAHKAN 3 BARIS DI BAWAH INI ---
+            protocolVersion: 4, // Memaksa menggunakan MQTT 3.1.1 (Sangat stabil untuk HiveMQ Cloud)
+            clean: true,
+            connectTimeout: 4000 // Batas waktu tunggu koneksi 4 detik
         };
         const topic = "esp32/sensor";
 
