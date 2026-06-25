@@ -406,6 +406,14 @@ function checkDeviceStatuses() {
             let url = `/api/history?device_id=${currentDeviceId}`;
             if(startVal && endVal) url += `&start=${encodeURIComponent(startVal)}&end=${encodeURIComponent(endVal)}`;
 
+            // ==========================================
+            // FITUR KOREKSI ZONA WAKTU VERCEL
+            // ==========================================
+            // Jika jam di web KECEPATAN 7 jam, biarkan angkanya -7
+            // Jika jam di web KELAMBATAN 7 jam, ganti angkanya menjadi 7
+            // Jika sudah pas, ganti menjadi 0
+            const KOREKSI_JAM = -7; 
+
             try {
                 const response = await fetch(url);
                 const logs = await response.json();
@@ -417,8 +425,13 @@ function checkDeviceStatuses() {
                          hBody.innerHTML = '<tr><td colspan="3" class="px-6 py-8 text-center text-slate-400">Tidak ada riwayat data untuk mesin ini.</td></tr>';
                     } else {
                         [...logs].reverse().forEach(item => {
+                            // Proses koreksi jam untuk Tabel
+                            let d = new Date(item.waktu);
+                            d.setHours(d.getHours() + KOREKSI_JAM);
+                            let waktuTampil = d.toLocaleString('id-ID');
+
                             const tr = document.createElement('tr');
-                            tr.innerHTML = `<td class="px-6 py-3.5">${new Date(item.waktu).toLocaleString('id-ID')}</td><td class="px-6 py-3.5 text-red-600 font-semibold">${item.suhu} &deg;C</td><td class="px-6 py-3.5 text-blue-600 font-semibold">${item.kelembapan} %</td>`;
+                            tr.innerHTML = `<td class="px-6 py-3.5">${waktuTampil}</td><td class="px-6 py-3.5 text-red-600 font-semibold">${item.suhu} &deg;C</td><td class="px-6 py-3.5 text-blue-600 font-semibold">${item.kelembapan} %</td>`;
                             hBody.appendChild(tr);
                         });
                     }
@@ -426,31 +439,24 @@ function checkDeviceStatuses() {
 
                 if(!startVal && logs.length > 0) {
                     logs.forEach(item => {
-                        const w = new Date(item.waktu).toLocaleTimeString('id-ID');
-                        analyticsChart.data.labels.push(w); analyticsChart.data.datasets[0].data.push(item.suhu); analyticsChart.data.datasets[1].data.push(item.kelembapan);
+                        // Proses koreksi jam untuk Grafik
+                        let d = new Date(item.waktu);
+                        d.setHours(d.getHours() + KOREKSI_JAM);
+                        const w = d.toLocaleTimeString('id-ID');
+                        
+                        analyticsChart.data.labels.push(w); 
+                        analyticsChart.data.datasets[0].data.push(item.suhu); 
+                        analyticsChart.data.datasets[1].data.push(item.kelembapan);
                     });
                     analyticsChart.update();
+                    
                     document.getElementById("current-suhu").innerText = logs[logs.length-1].suhu + " °C"; 
                     document.getElementById("current-kelembapan").innerText = logs[logs.length-1].kelembapan + " %";
                 }
-            } catch (error) {}
+            } catch (error) {
+                console.error("Gagal mengambil histori:", error);
+            }
         }
-
-        renderDeviceManagers();
-        clearDashboard(); 
-        
-        const client = mqtt.connect(`wss://${brokerUrl}:${port}/mqtt`, mqttOptions);
-       client.on("connect", () => {
-            const sb = document.getElementById("status-badge");
-            sb.className = "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
-            sb.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Broker Connected`;
-            
-            // 1. TAMBAHKAN SUBSCRIBE KE TOPIK STATUS UNTUK SEMUA MESIN
-            client.subscribe(`sensor/#`);
-            client.subscribe(`status/#`); 
-            
-            if(currentDeviceId) fetchHistory();
-        });
 
         client.on("message", (topic, message) => {
             try {
